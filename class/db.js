@@ -18,9 +18,10 @@ class db
 				{
 					var req = { username: username, password: password };
 					users.updateOne( req, { $set: req }, { upsert: true })
+					return true;
 				}
 				else
-					console.log("EXISTE");
+					return false;
 			});
 
 		});

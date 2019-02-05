@@ -10,10 +10,10 @@ router
 		next ();
 	})
 	.post('/register', (req, res, next) => {
-		console.log(req.body.pseudo);
-		console.log(req.body.password);
-		ddb.register(req.body.pseudo, req.body.password);
-		next ();
+		if(ddb.register(req.body.pseudo, req.body.password))
+			res.send({status: true, response: "Created account"});
+		else
+			res.send({status: false, response: "User already existe"});
 	})
 	.post('/', (req, res, next) => {
 		json = ddb.login();
