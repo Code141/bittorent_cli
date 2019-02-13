@@ -39,7 +39,9 @@ class bittorrent
 				let response = new bencode(buffer);
 
 				torrent.response = response;
+
 				console.log(response);
+
 				console.log("--------------------");
 				console.log("GET IP");
 				torrent.get_ip();
