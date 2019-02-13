@@ -1,8 +1,6 @@
 const router = require('express').Router();
 const db = require('../class/db');
 
-module.exports = router;
-
 router
 	.use((req, res, next) => {
 		console.log("hello");
@@ -25,3 +23,4 @@ router
 		res.send({status: false, from: "login"});
 	})
 
+module.exports = router;

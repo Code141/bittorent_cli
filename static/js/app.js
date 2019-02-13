@@ -1,12 +1,12 @@
 window.onload = () => {
-
 	var app = new Vue({
 		el: '#app',
 		data: {
 			errors: Array(),
 			new_ninja_name: "",
 			ninja_basecamp: [
-			]
+			],
+			torrents_list: []
 		},
 		mounted() {
 			this.get_ninjas();
@@ -36,6 +36,16 @@ window.onload = () => {
 				axios.get("/api/ninjas")
 					.then(response => {
 						this.ninja_basecamp = response.data.basecamp;
+					})
+					.catch(e => {
+						this.error.push(e)
+					})
+			},
+			get_torrents: function (){
+				axios.get("/api/torrent")
+					.then(response => {
+						console.log(response.data.torrents);
+//						this.torrents_list = response.data.torrents;
 					})
 					.catch(e => {
 						this.error.push(e)

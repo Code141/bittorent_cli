@@ -1,9 +1,8 @@
 const router = require('express').Router();
 
-module.exports = router;
-
 router
 	.use('/api/ninjas', require('./api'))
+	.use('/api/torrent', require('./torrent'))
 	.use('/login', require('./login'))
 	.use('/', (req, res) => {
 		res.setHeader('Content-Type', 'text/html')
@@ -14,3 +13,4 @@ router
 		res.end()
 	})
 
+module.exports = router;

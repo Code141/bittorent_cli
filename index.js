@@ -15,7 +15,7 @@ app
 
 	.use('/', require('./routes/main'))
 
-	.listen(process.env.port || 8080, () => {
+	.listen(process.env.port || 8081, () => {
 		console.log('- Server now listning -');
 	})
 

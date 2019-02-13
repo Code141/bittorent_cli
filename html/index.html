@@ -5,7 +5,7 @@
 		<title>
 			TITLE
 		</title>
-		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
 		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 		<script src="js/app.js"></script>
 	</head>
@@ -47,6 +47,10 @@
 			<button v-on:click="get_ninjas()">
 				Get all ninja !
 			</button>
+			<button v-on:click="get_torrents()">
+				Get all torrents !
+			</button>
+	
 			<hr>
 			<ol>
 				<li v-for="ninja in ninja_basecamp">
@@ -56,6 +60,14 @@
 					</span>
 				</li>
 			</ol>
+<hr>
+			<ol>
+				<li v-for="torrent in torrents_list">
+					{{torrent.info.name}}
+				</li>
+			</ol>
+<hr>
+	
 		</div>
 	</body>
 </html>

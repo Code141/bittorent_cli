@@ -1,8 +1,6 @@
 const router = require('express').Router();
 const basecamp = require('../class/ninja');
 
-module.exports = router;
-
 router
 	.use((req, res, next) => {
 		if (!req.session.basecamp)
@@ -26,3 +24,4 @@ router
 		res.send({status: false});
 	})
 
+module.exports = router;

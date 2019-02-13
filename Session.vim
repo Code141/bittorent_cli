@@ -21,13 +21,20 @@ vsplit
 wincmd _ | wincmd |
 vsplit
 3wincmd h
-wincmd w
 wincmd _ | wincmd |
 split
 wincmd _ | wincmd |
 split
-2wincmd k
+wincmd _ | wincmd |
+split
+3wincmd k
 wincmd w
+wincmd w
+wincmd w
+wincmd w
+wincmd _ | wincmd |
+split
+1wincmd k
 wincmd w
 wincmd w
 wincmd _ | wincmd |
@@ -44,36 +51,43 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-exe 'vert 1resize ' . ((&columns * 84 + 182) / 364)
-exe '2resize ' . ((&lines * 29 + 47) / 94)
+exe '1resize ' . ((&lines * 22 + 47) / 94)
+exe 'vert 1resize ' . ((&columns * 92 + 182) / 364)
+exe '2resize ' . ((&lines * 22 + 47) / 94)
 exe 'vert 2resize ' . ((&columns * 92 + 182) / 364)
-exe '3resize ' . ((&lines * 30 + 47) / 94)
+exe '3resize ' . ((&lines * 22 + 47) / 94)
 exe 'vert 3resize ' . ((&columns * 92 + 182) / 364)
-exe '4resize ' . ((&lines * 29 + 47) / 94)
+exe '4resize ' . ((&lines * 21 + 47) / 94)
 exe 'vert 4resize ' . ((&columns * 92 + 182) / 364)
-exe '5resize ' . ((&lines * 45 + 47) / 94)
-exe 'vert 5resize ' . ((&columns * 93 + 182) / 364)
-exe '6resize ' . ((&lines * 44 + 47) / 94)
-exe 'vert 6resize ' . ((&columns * 93 + 182) / 364)
+exe '5resize ' . ((&lines * 44 + 47) / 94)
+exe 'vert 5resize ' . ((&columns * 84 + 182) / 364)
+exe '6resize ' . ((&lines * 45 + 47) / 94)
+exe 'vert 6resize ' . ((&columns * 84 + 182) / 364)
 exe '7resize ' . ((&lines * 45 + 47) / 94)
-exe 'vert 7resize ' . ((&columns * 92 + 182) / 364)
+exe 'vert 7resize ' . ((&columns * 93 + 182) / 364)
 exe '8resize ' . ((&lines * 44 + 47) / 94)
-exe 'vert 8resize ' . ((&columns * 92 + 182) / 364)
+exe 'vert 8resize ' . ((&columns * 93 + 182) / 364)
+exe '9resize ' . ((&lines * 45 + 47) / 94)
+exe 'vert 9resize ' . ((&columns * 92 + 182) / 364)
+exe '10resize ' . ((&lines * 44 + 47) / 94)
+exe 'vert 10resize ' . ((&columns * 92 + 182) / 364)
 argglobal
 setlocal fdm=indent
 setlocal fde=0
 setlocal fmr={{{,}}}
 setlocal fdi=#
-setlocal fdl=2
+setlocal fdl=5
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 16 - ((15 * winheight(0) + 45) / 90)
+11
+normal! zo
+let s:l = 8 - ((7 * winheight(0) + 11) / 22)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-16
-normal! 039|
+8
+normal! 029|
 wincmd w
 argglobal
 if bufexists("routes/main.js") | buffer routes/main.js | else | edit routes/main.js | endif
@@ -85,16 +99,15 @@ setlocal fdl=2
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 1 - ((0 * winheight(0) + 14) / 29)
+let s:l = 14 - ((10 * winheight(0) + 11) / 22)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-1
-normal! 0
-lcd ~/cursus/app
+14
+normal! 020|
 wincmd w
 argglobal
-if bufexists("~/cursus/app/routes/api.js") | buffer ~/cursus/app/routes/api.js | else | edit ~/cursus/app/routes/api.js | endif
+if bufexists("routes/api.js") | buffer routes/api.js | else | edit routes/api.js | endif
 setlocal fdm=indent
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -103,16 +116,15 @@ setlocal fdl=3
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 1 - ((0 * winheight(0) + 15) / 30)
+let s:l = 3 - ((2 * winheight(0) + 11) / 22)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-1
+3
 normal! 0
-lcd ~/cursus/app
 wincmd w
 argglobal
-if bufexists("~/cursus/app/routes/login.js") | buffer ~/cursus/app/routes/login.js | else | edit ~/cursus/app/routes/login.js | endif
+if bufexists("routes/login.js") | buffer routes/login.js | else | edit routes/login.js | endif
 setlocal fdm=indent
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -121,16 +133,15 @@ setlocal fdl=2
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 1 - ((0 * winheight(0) + 14) / 29)
+let s:l = 16 - ((14 * winheight(0) + 10) / 21)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-1
-normal! 0
-lcd ~/cursus/app
+16
+normal! 021|
 wincmd w
 argglobal
-if bufexists("~/cursus/app/class/ninja.js") | buffer ~/cursus/app/class/ninja.js | else | edit ~/cursus/app/class/ninja.js | endif
+if bufexists("routes/torrent.js") | buffer routes/torrent.js | else | edit routes/torrent.js | endif
 setlocal fdm=indent
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -139,25 +150,126 @@ setlocal fdl=3
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-3
+11
 normal! zo
-5
+15
 normal! zo
-let s:l = 18 - ((9 * winheight(0) + 22) / 45)
+15
+normal! zo
+22
+normal! zo
+let s:l = 18 - ((17 * winheight(0) + 22) / 44)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 18
-normal! 09|
-lcd ~/cursus/app
+normal! 042|
 wincmd w
 argglobal
-if bufexists("~/cursus/app/class/db.js") | buffer ~/cursus/app/class/db.js | else | edit ~/cursus/app/class/db.js | endif
+if bufexists("class/bencode.js") | buffer class/bencode.js | else | edit class/bencode.js | endif
 setlocal fdm=indent
 setlocal fde=0
 setlocal fmr={{{,}}}
 setlocal fdi=#
-setlocal fdl=5
+setlocal fdl=4
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+5
+normal! zo
+7
+normal! zo
+18
+normal! zo
+35
+normal! zo
+42
+normal! zo
+44
+normal! zo
+45
+normal! zo
+51
+normal! zo
+52
+normal! zo
+63
+normal! zo
+65
+normal! zo
+86
+normal! zo
+104
+normal! zo
+119
+normal! zo
+142
+normal! zo
+147
+normal! zo
+let s:l = 95 - ((33 * winheight(0) + 22) / 45)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+95
+normal! 0
+wincmd w
+argglobal
+if bufexists("class/bittorrent.js") | buffer class/bittorrent.js | else | edit class/bittorrent.js | endif
+setlocal fdm=indent
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=3
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+9
+normal! zo
+11
+normal! zo
+37
+normal! zo
+37
+normal! zo
+37
+normal! zo
+38
+normal! zo
+41
+normal! zo
+45
+normal! zo
+47
+normal! zo
+52
+normal! zo
+57
+normal! zo
+57
+normal! zo
+63
+normal! zo
+68
+normal! zo
+71
+normal! zo
+75
+normal! zo
+let s:l = 16 - ((8 * winheight(0) + 22) / 45)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+16
+normal! 0
+wincmd w
+argglobal
+terminal ++curwin ++cols=93 ++rows=44 
+setlocal fdm=indent
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=0
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
@@ -167,10 +279,9 @@ exe s:l
 normal! zt
 1
 normal! 0
-lcd ~/cursus/app
 wincmd w
 argglobal
-if bufexists("~/cursus/app/static/js/app.js") | buffer ~/cursus/app/static/js/app.js | else | edit ~/cursus/app/static/js/app.js | endif
+if bufexists("static/js/app.js") | buffer static/js/app.js | else | edit static/js/app.js | endif
 setlocal fdm=indent
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -179,15 +290,35 @@ setlocal fdl=7
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 1 - ((0 * winheight(0) + 22) / 45)
+2
+normal! zo
+3
+normal! zo
+15
+normal! zo
+45
+normal! zo
+46
+normal! zo
+49
+normal! zo
+49
+normal! zo
+49
+normal! zo
+49
+normal! zo
+49
+normal! zo
+let s:l = 43 - ((32 * winheight(0) + 22) / 45)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-1
-normal! 0
+43
+normal! 014|
 wincmd w
 argglobal
-if bufexists("~/cursus/app/html/index.html") | buffer ~/cursus/app/html/index.html | else | edit ~/cursus/app/html/index.html | endif
+if bufexists("html/index.html") | buffer html/index.html | else | edit html/index.html | endif
 setlocal fdm=indent
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -196,40 +327,70 @@ setlocal fdl=6
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 2 - ((1 * winheight(0) + 22) / 44)
+3
+normal! zo
+4
+normal! zo
+13
+normal! zo
+17
+normal! zo
+56
+normal! zo
+57
+normal! zo
+64
+normal! zo
+64
+normal! zo
+64
+normal! zo
+65
+normal! zo
+let s:l = 37 - ((36 * winheight(0) + 22) / 44)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-2
+37
 normal! 0
 wincmd w
-4wincmd w
-exe 'vert 1resize ' . ((&columns * 84 + 182) / 364)
-exe '2resize ' . ((&lines * 29 + 47) / 94)
+6wincmd w
+exe '1resize ' . ((&lines * 22 + 47) / 94)
+exe 'vert 1resize ' . ((&columns * 92 + 182) / 364)
+exe '2resize ' . ((&lines * 22 + 47) / 94)
 exe 'vert 2resize ' . ((&columns * 92 + 182) / 364)
-exe '3resize ' . ((&lines * 30 + 47) / 94)
+exe '3resize ' . ((&lines * 22 + 47) / 94)
 exe 'vert 3resize ' . ((&columns * 92 + 182) / 364)
-exe '4resize ' . ((&lines * 29 + 47) / 94)
+exe '4resize ' . ((&lines * 21 + 47) / 94)
 exe 'vert 4resize ' . ((&columns * 92 + 182) / 364)
-exe '5resize ' . ((&lines * 45 + 47) / 94)
-exe 'vert 5resize ' . ((&columns * 93 + 182) / 364)
-exe '6resize ' . ((&lines * 44 + 47) / 94)
-exe 'vert 6resize ' . ((&columns * 93 + 182) / 364)
+exe '5resize ' . ((&lines * 44 + 47) / 94)
+exe 'vert 5resize ' . ((&columns * 84 + 182) / 364)
+exe '6resize ' . ((&lines * 45 + 47) / 94)
+exe 'vert 6resize ' . ((&columns * 84 + 182) / 364)
 exe '7resize ' . ((&lines * 45 + 47) / 94)
-exe 'vert 7resize ' . ((&columns * 92 + 182) / 364)
+exe 'vert 7resize ' . ((&columns * 93 + 182) / 364)
 exe '8resize ' . ((&lines * 44 + 47) / 94)
-exe 'vert 8resize ' . ((&columns * 92 + 182) / 364)
+exe 'vert 8resize ' . ((&columns * 93 + 182) / 364)
+exe '9resize ' . ((&lines * 45 + 47) / 94)
+exe 'vert 9resize ' . ((&columns * 92 + 182) / 364)
+exe '10resize ' . ((&lines * 44 + 47) / 94)
+exe 'vert 10resize ' . ((&columns * 92 + 182) / 364)
 tabnext 1
+badd +1 index.js
 badd +1 ~/cursus/app/index.js
-badd +0 ~/cursus/app/routes/login.js
-badd +0 ~/cursus/app/routes/db.js
-badd +13 ~/cursus/app/routes/api.js
-badd +31 ~/cursus/app/class/db.js
-badd +1 ~/cursus/app/class/ninja.js
-badd +1 ~/cursus/app/static/js/app.js
-badd +1 ~/cursus/app/html/index.html
-badd +1 ~/cursus/app
-badd +0 ~/cursus/app/routes/main.js
+badd +16 routes/main.js
+badd +22 routes/torrent.js
+badd +1 class/bittorrent.js
+badd +8 class/bencode.js
+badd +1 static/js/app.js
+badd +1 html/index.html
+badd +8 routes/api.js
+badd +1 routes/login.js
+badd +1 class/ninja.js
+badd +3 class/db.js
+badd +17 class/bencoding.js
+badd +9277 t
+badd +44 class/bittorrent_reader.js
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0
   silent exe 'bwipe ' . s:wipebuf
 endif
@@ -241,7 +402,6 @@ if file_readable(s:sx)
   exe "source " . fnameescape(s:sx)
 endif
 let &so = s:so_save | let &siso = s:siso_save
-nohlsearch
 doautoall SessionLoadPost
 unlet SessionLoad
 " vim: set ft=vim :
