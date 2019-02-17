@@ -16,11 +16,9 @@ class bencode
 			this.data = null;
 			if (this.i != 0)
 			{
-//				console.log(this.buffer.toString('binary'));
-				console.log("ERROR " +e);
-//				throw "Bencode: " + e + " at offset " + this.i;
+				throw "Bencode: " + e + " at offset " + this.i;
 			}
-//			throw "Bencode: Ressource given is not readeable";
+			throw "Bencode: Ressource given is not readeable";
 		}
 	}
 
@@ -45,13 +43,13 @@ class bencode
 				})
 				str = "l" + str + "e";
 			}
-			else
-			{
-				Object.keys(data).forEach(key => {
-					str += this.encode(key) + "" + this.encode(data[key]);
-				});
-				str = "d" + str + "e";
-			}
+		else
+		{
+			Object.keys(data).forEach(key => {
+				str += this.encode(key) + "" + this.encode(data[key]);
+			});
+			str = "d" + str + "e";
+		}
 		else
 			throw "Encoding error";
 		return str;
@@ -63,35 +61,31 @@ class bencode
 
 		if (typeof this.response.data.peers === "undefined")
 		{
+			console.log("no peers !");
 			return null;
 		}
 
 		let p = this.response.data.peers;
 		let p_l = this.response.data.peers.length;
 
-		if (p_l == 0)
-			return null;
-
-		if ((p_l % 6) == 0)
-		{
-			console.log('Peers: ' + p + " Length: " + p_l);
-			var i = 0;
-			while (i < p_l)
-			{
-				let ip = p[i] +
-					"." + p[i + 1] +
-					"." + p[i + 2] +
-					"." + p[i + 3];
-
-				let port = p[i + 4] + p[i + 5];
-				console.log (ip + ":" + port);
-				i += 6;
-			}
-		}
-		else
+		if ((p_l % 6) != 0)
 		{
 			console.log("peers not parseable");
-			return null;
+			return ;
+		}
+
+		this.seeders = Array();
+		var i = 0;
+		while (i < p_l)
+		{
+			let ip = p[i].charCodeAt(0) +
+				"." + p[i + 1].charCodeAt(0)+
+				"." + p[i + 2].charCodeAt(0)+
+				"." + p[i + 3].charCodeAt(0);
+			var buf = Buffer.from(p.slice(i+4, i+4+2), 'binary');
+			var port = buf[0] * 256 + buf[1];
+			this.seeders.push({ip: ip, port: port});
+			i += 6;
 		}
 	}
 

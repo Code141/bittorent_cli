@@ -37,10 +37,6 @@ split
 1wincmd k
 wincmd w
 wincmd w
-wincmd _ | wincmd |
-split
-1wincmd k
-wincmd w
 wincmd w
 wincmd _ | wincmd |
 split
@@ -51,26 +47,23 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-exe '1resize ' . ((&lines * 22 + 47) / 94)
-exe 'vert 1resize ' . ((&columns * 92 + 182) / 364)
-exe '2resize ' . ((&lines * 22 + 47) / 94)
-exe 'vert 2resize ' . ((&columns * 92 + 182) / 364)
-exe '3resize ' . ((&lines * 22 + 47) / 94)
-exe 'vert 3resize ' . ((&columns * 92 + 182) / 364)
-exe '4resize ' . ((&lines * 21 + 47) / 94)
-exe 'vert 4resize ' . ((&columns * 92 + 182) / 364)
-exe '5resize ' . ((&lines * 44 + 47) / 94)
-exe 'vert 5resize ' . ((&columns * 84 + 182) / 364)
-exe '6resize ' . ((&lines * 45 + 47) / 94)
-exe 'vert 6resize ' . ((&columns * 84 + 182) / 364)
-exe '7resize ' . ((&lines * 45 + 47) / 94)
-exe 'vert 7resize ' . ((&columns * 93 + 182) / 364)
-exe '8resize ' . ((&lines * 44 + 47) / 94)
-exe 'vert 8resize ' . ((&columns * 93 + 182) / 364)
-exe '9resize ' . ((&lines * 45 + 47) / 94)
-exe 'vert 9resize ' . ((&columns * 92 + 182) / 364)
-exe '10resize ' . ((&lines * 44 + 47) / 94)
-exe 'vert 10resize ' . ((&columns * 92 + 182) / 364)
+exe '1resize ' . ((&lines * 22 + 47) / 95)
+exe 'vert 1resize ' . ((&columns * 93 + 182) / 365)
+exe '2resize ' . ((&lines * 22 + 47) / 95)
+exe 'vert 2resize ' . ((&columns * 93 + 182) / 365)
+exe '3resize ' . ((&lines * 22 + 47) / 95)
+exe 'vert 3resize ' . ((&columns * 93 + 182) / 365)
+exe '4resize ' . ((&lines * 22 + 47) / 95)
+exe 'vert 4resize ' . ((&columns * 93 + 182) / 365)
+exe '5resize ' . ((&lines * 45 + 47) / 95)
+exe 'vert 5resize ' . ((&columns * 84 + 182) / 365)
+exe '6resize ' . ((&lines * 45 + 47) / 95)
+exe 'vert 6resize ' . ((&columns * 84 + 182) / 365)
+exe 'vert 7resize ' . ((&columns * 93 + 182) / 365)
+exe '8resize ' . ((&lines * 45 + 47) / 95)
+exe 'vert 8resize ' . ((&columns * 92 + 182) / 365)
+exe '9resize ' . ((&lines * 45 + 47) / 95)
+exe 'vert 9resize ' . ((&columns * 92 + 182) / 365)
 argglobal
 setlocal fdm=indent
 setlocal fde=0
@@ -104,7 +97,7 @@ if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 14
-normal! 020|
+normal! 06|
 wincmd w
 argglobal
 if bufexists("routes/api.js") | buffer routes/api.js | else | edit routes/api.js | endif
@@ -133,7 +126,7 @@ setlocal fdl=2
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 16 - ((14 * winheight(0) + 10) / 21)
+let s:l = 16 - ((14 * winheight(0) + 11) / 22)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
@@ -146,24 +139,16 @@ setlocal fdm=indent
 setlocal fde=0
 setlocal fmr={{{,}}}
 setlocal fdi=#
-setlocal fdl=3
+setlocal fdl=5
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-11
-normal! zo
-15
-normal! zo
-15
-normal! zo
-22
-normal! zo
-let s:l = 18 - ((17 * winheight(0) + 22) / 44)
+let s:l = 34 - ((33 * winheight(0) + 22) / 45)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-18
-normal! 042|
+34
+normal! 013|
 wincmd w
 argglobal
 if bufexists("class/bencode.js") | buffer class/bencode.js | else | edit class/bencode.js | endif
@@ -171,48 +156,16 @@ setlocal fdm=indent
 setlocal fde=0
 setlocal fmr={{{,}}}
 setlocal fdi=#
-setlocal fdl=4
+setlocal fdl=5
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-5
-normal! zo
-7
-normal! zo
-18
-normal! zo
-35
-normal! zo
-42
-normal! zo
-44
-normal! zo
-45
-normal! zo
-51
-normal! zo
-52
-normal! zo
-63
-normal! zo
-65
-normal! zo
-86
-normal! zo
-104
-normal! zo
-119
-normal! zo
-142
-normal! zo
-147
-normal! zo
-let s:l = 95 - ((33 * winheight(0) + 22) / 45)
+let s:l = 81 - ((20 * winheight(0) + 22) / 45)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-95
-normal! 0
+81
+normal! 024|
 wincmd w
 argglobal
 if bufexists("class/bittorrent.js") | buffer class/bittorrent.js | else | edit class/bittorrent.js | endif
@@ -220,64 +173,15 @@ setlocal fdm=indent
 setlocal fde=0
 setlocal fmr={{{,}}}
 setlocal fdi=#
-setlocal fdl=3
+setlocal fdl=5
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-9
-normal! zo
-11
-normal! zo
-37
-normal! zo
-37
-normal! zo
-37
-normal! zo
-38
-normal! zo
-41
-normal! zo
-45
-normal! zo
-47
-normal! zo
-52
-normal! zo
-57
-normal! zo
-57
-normal! zo
-63
-normal! zo
-68
-normal! zo
-71
-normal! zo
-75
-normal! zo
-let s:l = 16 - ((8 * winheight(0) + 22) / 45)
+let s:l = 16 - ((15 * winheight(0) + 45) / 91)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 16
-normal! 0
-wincmd w
-argglobal
-terminal ++curwin ++cols=93 ++rows=44 
-setlocal fdm=indent
-setlocal fde=0
-setlocal fmr={{{,}}}
-setlocal fdi=#
-setlocal fdl=0
-setlocal fml=1
-setlocal fdn=20
-setlocal fen
-let s:l = 1 - ((0 * winheight(0) + 22) / 44)
-if s:l < 1 | let s:l = 1 | endif
-exe s:l
-normal! zt
-1
 normal! 0
 wincmd w
 argglobal
@@ -347,45 +251,42 @@ normal! zo
 normal! zo
 65
 normal! zo
-let s:l = 37 - ((36 * winheight(0) + 22) / 44)
+let s:l = 37 - ((36 * winheight(0) + 22) / 45)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 37
 normal! 0
 wincmd w
-6wincmd w
-exe '1resize ' . ((&lines * 22 + 47) / 94)
-exe 'vert 1resize ' . ((&columns * 92 + 182) / 364)
-exe '2resize ' . ((&lines * 22 + 47) / 94)
-exe 'vert 2resize ' . ((&columns * 92 + 182) / 364)
-exe '3resize ' . ((&lines * 22 + 47) / 94)
-exe 'vert 3resize ' . ((&columns * 92 + 182) / 364)
-exe '4resize ' . ((&lines * 21 + 47) / 94)
-exe 'vert 4resize ' . ((&columns * 92 + 182) / 364)
-exe '5resize ' . ((&lines * 44 + 47) / 94)
-exe 'vert 5resize ' . ((&columns * 84 + 182) / 364)
-exe '6resize ' . ((&lines * 45 + 47) / 94)
-exe 'vert 6resize ' . ((&columns * 84 + 182) / 364)
-exe '7resize ' . ((&lines * 45 + 47) / 94)
-exe 'vert 7resize ' . ((&columns * 93 + 182) / 364)
-exe '8resize ' . ((&lines * 44 + 47) / 94)
-exe 'vert 8resize ' . ((&columns * 93 + 182) / 364)
-exe '9resize ' . ((&lines * 45 + 47) / 94)
-exe 'vert 9resize ' . ((&columns * 92 + 182) / 364)
-exe '10resize ' . ((&lines * 44 + 47) / 94)
-exe 'vert 10resize ' . ((&columns * 92 + 182) / 364)
+7wincmd w
+exe '1resize ' . ((&lines * 22 + 47) / 95)
+exe 'vert 1resize ' . ((&columns * 93 + 182) / 365)
+exe '2resize ' . ((&lines * 22 + 47) / 95)
+exe 'vert 2resize ' . ((&columns * 93 + 182) / 365)
+exe '3resize ' . ((&lines * 22 + 47) / 95)
+exe 'vert 3resize ' . ((&columns * 93 + 182) / 365)
+exe '4resize ' . ((&lines * 22 + 47) / 95)
+exe 'vert 4resize ' . ((&columns * 93 + 182) / 365)
+exe '5resize ' . ((&lines * 45 + 47) / 95)
+exe 'vert 5resize ' . ((&columns * 84 + 182) / 365)
+exe '6resize ' . ((&lines * 45 + 47) / 95)
+exe 'vert 6resize ' . ((&columns * 84 + 182) / 365)
+exe 'vert 7resize ' . ((&columns * 93 + 182) / 365)
+exe '8resize ' . ((&lines * 45 + 47) / 95)
+exe 'vert 8resize ' . ((&columns * 92 + 182) / 365)
+exe '9resize ' . ((&lines * 45 + 47) / 95)
+exe 'vert 9resize ' . ((&columns * 92 + 182) / 365)
 tabnext 1
 badd +1 index.js
 badd +1 ~/cursus/app/index.js
 badd +16 routes/main.js
-badd +22 routes/torrent.js
-badd +1 class/bittorrent.js
-badd +8 class/bencode.js
-badd +1 static/js/app.js
-badd +1 html/index.html
 badd +8 routes/api.js
 badd +1 routes/login.js
+badd +22 routes/torrent.js
+badd +0 class/bencode.js
+badd +1 class/bittorrent.js
+badd +1 static/js/app.js
+badd +1 html/index.html
 badd +1 class/ninja.js
 badd +3 class/db.js
 badd +17 class/bencoding.js
@@ -402,6 +303,7 @@ if file_readable(s:sx)
   exe "source " . fnameescape(s:sx)
 endif
 let &so = s:so_save | let &siso = s:siso_save
+nohlsearch
 doautoall SessionLoadPost
 unlet SessionLoad
 " vim: set ft=vim :
