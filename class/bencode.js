@@ -61,19 +61,24 @@ class bencode
 
 		if (typeof this.response.data.peers === "undefined")
 		{
-			console.log("no peers !");
+			console.log("no peers");
 			return null;
 		}
 
 		let p = this.response.data.peers;
 		let p_l = this.response.data.peers.length;
 
+		if (p_l == 0)
+		{
+			console.log("no peers");
+			return ;
+		}
+
 		if ((p_l % 6) != 0)
 		{
 			console.log("peers not parseable");
 			return ;
 		}
-
 		this.seeders = Array();
 		var i = 0;
 		while (i < p_l)
