@@ -1,5 +1,3 @@
-const sha1 = require('sha1');
-
 class bencode
 {
 	constructor(buffer)
@@ -7,6 +5,7 @@ class bencode
 		this.buffer = buffer;
 		this.buffer_length = buffer.length;
 		this.i = 0;
+
 		try
 		{
 			this.data = this.read();
@@ -19,78 +18,6 @@ class bencode
 				throw "Bencode: " + e + " at offset " + this.i;
 			}
 			throw "Bencode: Ressource given is not readeable";
-		}
-	}
-
-	get_info_hash()
-	{
-		return (sha1(Buffer.from(this.encode(this.data.info), 'binary')));
-	}
-
-	encode(data)
-	{
-		var str = "";
-
-		if (typeof data == 'string')
-			str = data.length + ":" + data;
-		else if (typeof data == 'number')
-			str = "i" + data + "e";
-		else if (typeof data == 'object')
-			if (Array.isArray(data))
-			{
-				data.forEach(element => {
-					str += this.encode(element);
-				})
-				str = "l" + str + "e";
-			}
-		else
-		{
-			Object.keys(data).forEach(key => {
-				str += this.encode(key) + "" + this.encode(data[key]);
-			});
-			str = "d" + str + "e";
-		}
-		else
-			throw "Encoding error";
-		return str;
-	}
-
-	get_ip()
-	{
-		let peers = Array();
-
-		if (typeof this.response.data.peers === "undefined")
-		{
-			console.log("no peers");
-			return null;
-		}
-
-		let p = this.response.data.peers;
-		let p_l = this.response.data.peers.length;
-
-		if (p_l == 0)
-		{
-			console.log("no peers");
-			return ;
-		}
-
-		if ((p_l % 6) != 0)
-		{
-			console.log("peers not parseable");
-			return ;
-		}
-		this.seeders = Array();
-		var i = 0;
-		while (i < p_l)
-		{
-			let ip = p[i].charCodeAt(0) +
-				"." + p[i + 1].charCodeAt(0)+
-				"." + p[i + 2].charCodeAt(0)+
-				"." + p[i + 3].charCodeAt(0);
-			var buf = Buffer.from(p.slice(i+4, i+4+2), 'binary');
-			var port = buf[0] * 256 + buf[1];
-			this.seeders.push({ip: ip, port: port});
-			i += 6;
 		}
 	}
 
@@ -186,6 +113,35 @@ class bencode
 		return list;
 	}
 }
+
+bencode.encode = function(data)
+	{
+		var str = "";
+
+		if (typeof data == 'string')
+			str = data.length + ":" + data;
+		else if (typeof data == 'number')
+			str = "i" + data + "e";
+		else if (typeof data == 'object')
+			if (Array.isArray(data))
+			{
+				data.forEach(element => {
+					str += bencode.encode(element);
+				})
+				str = "l" + str + "e";
+			}
+			else
+			{
+				Object.keys(data).forEach(key => {
+					str += bencode.encode(key) + "" + bencode.encode(data[key]);
+				});
+				str = "d" + str + "e";
+			}
+		else
+			throw "Encoding error";
+		return str;
+	}
+
 
 module.exports = bencode;
 

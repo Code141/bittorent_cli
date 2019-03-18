@@ -1,40 +1,43 @@
 const router = require('express').Router();
-const bencode = require('../class/bencode');
-const bittorrent = require('../class/bittorrent');
 const fs = require('fs');
+const bittorrent = require('../class/bittorrent');
 
 const torrent_folder = __basedir + '/torrents/';
 
 module.exports = router;
 
+const bt_cli = new bittorrent();
+
 router
 	.get('/', (req, res) => {
 
-		var torrents = Array();
+		fs.readdirSync(torrent_folder).forEach(file => {
+			try {
+				bt_cli.addTorrentFromFile(torrent_folder + file);
+			} catch (e) {
+				console.log("Add torrent file : " + e);
+			}
+		})
+
+		try {
+			bt_cli.addTorrentFromFile(torrent_folder + "tmw-wave.torrent");
+		} catch (e) {
+			console.log("Add torrent file : " + e);
+		}
+
+		res.send({status: true});
+	})
+
 
 /*
-		fs.readdirSync(torrent_folder).forEach(file => {
-			buffer = fs.readFileSync(torrent_folder + file);
-			promise = new Promise(function (resolve, reject) {
-				if (true)
-					resolve("true");
-				else
-					reject("false");
-			});
-			promise
-				.then(value => { console.log("resolve : " + value); })
-				.catch(value => { console.log("reject : " + value); });
-			torrent = new bencode(buffer);
-			if (torrent.data.announce.search("http") != -1)
-				buf = new bittorrent(torrent);
-			torrents.push(torrent.data);
-		})
+	promise = new Promise(function (resolve, reject) {
+		if (true)
+			resolve("true");
+		else
+			reject("false");
+	});
+	promise
+		.then(value => { console.log("resolve : " + value); })
+		.catch(value => { console.log("reject : " + value); });
 */
-		buffer = fs.readFileSync(torrent_folder + "tmw-wave.torrent");
-		torrent = new bencode(buffer);
-		buf = new bittorrent(torrent);
-		torrents.push(torrent.data);
-		res.send({status: true, torrents: torrents});
-
-	})
 

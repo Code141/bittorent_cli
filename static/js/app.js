@@ -45,7 +45,7 @@ window.onload = () => {
 				axios.get("/api/torrent")
 					.then(response => {
 						console.log(response.data.torrents);
-//						this.torrents_list = response.data.torrents;
+						//						this.torrents_list = response.data.torrents;
 					})
 					.catch(e => {
 						this.error.push(e)
@@ -68,4 +68,43 @@ window.onload = () => {
 			}
 		}
 	})
+
+
+
+
+
+
+
+/*
+
+		// if user is running mozilla then use it's built-in WebSocket
+		window.WebSocket = window.WebSocket || window.MozWebSocket;
+
+		var connection = new WebSocket('ws://127.0.0.1:1337');
+
+		connection.onopen = function () {
+			connection.send("Voici un texte que le serveur attend de recevoir dès que possible !");
+			// connection is opened and ready to use
+		};
+
+		connection.onerror = function (error) {
+			// an error occurred when sending/receiving data
+		};
+
+		connection.onmessage = function (message) {
+			// try to decode json (I assume that each message
+			// from server is json)
+
+				console.log('MESSAGE');
+			try {
+				var json = JSON.parse(message.data);
+			} catch (e) {
+				console.log('This doesn\'t look like a valid JSON: ',
+					message.data);
+				return;
+			}
+			// handle incoming message
+		};
+*/
+
 };
