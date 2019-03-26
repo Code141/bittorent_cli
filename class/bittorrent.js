@@ -7,11 +7,13 @@ const sha1 = require('sha1');
 
 const bencode = require('../class/bencode');
 const peer = require('../class/peer');
+const EventEmitter = require('events');
 
-class torrent
+class torrent extends EventEmitter
 {
 	constructor (obj)
 	{
+		super();
 		this.announce = obj.announce;
 
 		this.info = Object();
@@ -39,7 +41,7 @@ class torrent
 			this.nb_pieces = Math.ceil(this.info.length / this.info.piece_length);
 			this.bitfield_length = Math.ceil(this.nb_pieces / 8);
 			this.bitefield = Buffer.alloc(this.bitfield_length);
-			this.bitefield = new ABuffer.alloc(this.bitfield_length);
+			this.bitefield = new Buffer.alloc(this.bitfield_length);
 			if ("md5sum" in obj.info)
 				this.info.md5sum = obj.info["md5sum"];
 		}
@@ -160,6 +162,9 @@ class bittorrent
 								// If is not present in torrent.peers
 								torrent.peers.push(peer);
 								peer.connection(this, torrent);
+								peer.on('ready', () => {
+									console.log('READY');
+								});
 							});
 						}
 						catch (e)

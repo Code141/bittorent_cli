@@ -1,7 +1,7 @@
 const net = require('net');
 const ByteBuffer = require("bytebuffer");
 const sha1 = require('sha1');
-
+const EventEmitter = require('events');
 /*
 	print_buff_bin(buf, start, offset)
 	{
@@ -24,10 +24,11 @@ const sha1 = require('sha1');
 	}
 */
 
-class peer
+class peer extends EventEmitter
 {
 	constructor(ip, port)
 	{
+		super();
 		this.ip = ip;
 		this.port = port;
 
@@ -237,6 +238,7 @@ class peer
 		//
 		// I SHOULD SEND MY BITEFIELD HERE
 		//
+		this.emit('ready');
 	}
 }
 
