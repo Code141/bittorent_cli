@@ -159,7 +159,7 @@ class peer extends EventEmitter
 	get_block(payload)
 	{
 
-		// VERIFIER QUE LA PIECE EST BIEN CELLE DEMANDER
+		// VERIFIER QUE LA PIECE RECUE EST BIEN CELLE DEMANDE
 		// SINON POSSIBILITEE D'INJECTION
 		// OU DE DEPASSEMENT
 
@@ -179,8 +179,7 @@ class peer extends EventEmitter
 			console.log(hash);
 			console.log(sha1(this.piece_buffer));
 			console.log("----------------");
-
-			this.torrent.piece[index] = this.piece_buffer;
+	//		this.torrent.piece[index] = this.piece_buffer;
 
 			let i = Math.floor(index / 8);
 			let bit = 0x80 >> (index % 8);

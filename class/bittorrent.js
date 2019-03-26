@@ -11,10 +11,11 @@ const EventEmitter = require('events');
 
 class torrent extends EventEmitter
 {
-	constructor (obj)
+	constructor (bt_cli, obj)
 	{
 		super();
 		this.announce = obj.announce;
+		this.bt_cli = bt_cli;
 
 		this.info = Object();
 		this.info.piece_length = obj.info["piece length"];
@@ -89,6 +90,27 @@ class torrent extends EventEmitter
 		});
 	}
 
+
+	connect_all_peers()
+	{
+		this.peers.forEach(peer => {
+			peer.connection(this.bt_cli, this);
+			peer.on('ready', () => {
+				console.log('READY');
+				console.log(peer.ip);
+	
+			});
+		});
+
+	}
+
+	add_peers(peer)
+	{
+		// if non existe
+		this.peers.push(peer);
+	}
+
+
 }
 
 class bittorrent
@@ -96,15 +118,15 @@ class bittorrent
 	constructor()
 	{
 		this.protocol = "BitTorrent protocol";
-		this.torrents = Object();
 		this.peer_id = "2b90241f8e95d53cacf0f8c72a92e46b57911600";
+		this.torrents = Object();
 	}
 
 	addTorrentFromFile(file)
 	{
 		let buffer = fs.readFileSync(file);
 
-		var t = new torrent(new bencode(buffer).data);
+		var t = new torrent(this, new bencode(buffer).data);
 		for (var info_hash in this.torrents)
 			if (t.info_hash === info_hash)
 				throw "Torrent " + t.info.name + " already existe info_hash=[" + t.info_hash + "]";
@@ -159,13 +181,9 @@ class bittorrent
 						try
 						{
 							this.get_ip(peers).forEach(peer => {
-								// If is not present in torrent.peers
-								torrent.peers.push(peer);
-								peer.connection(this, torrent);
-								peer.on('ready', () => {
-									console.log('READY');
-								});
+								torrent.add_peers(peer);
 							});
+							torrent.connect_all_peers();
 						}
 						catch (e)
 						{
