@@ -22,7 +22,7 @@ router
 		try {
 			bt_cli.addTorrentFromFile(torrent_folder + "tmw-wave.torrent");
 		} catch (e) {
-			console.log("Add torrent file : " + e);
+			console.log("ERROR : " + e);
 		}
 
 		res.send({status: true});

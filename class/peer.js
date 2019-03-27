@@ -156,7 +156,7 @@ class peer extends EventEmitter
 			let bit = 0x80 >> (payload_int % 8);
 
 			// CHECK INDEX OVERFLOW
-			if (index >= bitfield.length)
+			if (index >= this.bitfield.length)
 				throw "bitfield_set bad offset";
 			this.bitfield[index] |= bit;
 	}

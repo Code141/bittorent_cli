@@ -20,11 +20,22 @@ class torrent extends EventEmitter
 
 		this.peers_connected = Array();
 		this.build(obj);
+		
+
+		this.peer_id = "2b90241f8e95d53cacf0f8c72a92e46b57911600";
+		this.protocol = "BitTorrent protocol";
 	}
 
 	start()
 	{
-		this.announce();
+		try
+		{
+			this.make_announce();
+		}
+		catch(e)
+		{
+			console.log(e);
+		}
 	}
 
 	build(obj)
@@ -35,11 +46,12 @@ class torrent extends EventEmitter
 		this.info.pieces = obj.info["pieces"];
 		this.info.name = obj.info["name"];
 		this.info_hash = sha1(Buffer.from(bencode.encode(obj.info), 'binary'));
-
+	
 		if ("files" in obj.info)
 		{
 			// Foreach
 			throw  "Multiples files torrent not supported yet: " + this.info.name;
+
 			if ("md5sum" in obj.info)
 				this.info.md5sum = obj.info["md5sum"];
 			/* MULTIPLE FILE MODE
@@ -168,7 +180,7 @@ class torrent extends EventEmitter
 		*/
 	}
 
-	announce()
+	make_announce()
 	{
 		if (this.announce.search("udp") > -1)
 		{
@@ -178,7 +190,7 @@ class torrent extends EventEmitter
 
 		let url = this.announce
 			+ "?" + "info_hash="	+ this.url_encode(this.info_hash)
-			+ "&" + "peer_id="		+ this.url_encode(this.bt_cli.peer_id)
+			+ "&" + "peer_id="		+ this.url_encode(this.peer_id)
 			+ "&" + "port="			+ 6881
 			+ "&" + "uploaded="		+ 0
 			+ "&" + "downloaded="	+ 0
@@ -202,7 +214,6 @@ class torrent extends EventEmitter
 					}
 
 					let str_peers = response.data.peers;
-
 					if (typeof str_peers === "undefined")
 					{
 						console.log("no list peers given");
@@ -252,7 +263,6 @@ class torrent extends EventEmitter
 
 		if ((peers.length % 6) != 0)
 			throw "peers not parseable";
-
 		while (i < peers.length)
 		{
 			let ip = peers[i].charCodeAt(0) +
@@ -263,13 +273,7 @@ class torrent extends EventEmitter
 			var port = buf[0] * 256 + buf[1];
 
 			let id = peers.slice(i, i + 6);
-			seeders[id] = new peer(
-				id,
-				ip,
-				port,
-				this.protocol,
-				this.peer_id
-			);
+			seeders[id] = new peer( id, ip, port, this.protocol, this.peer_id);
 			i += 6;
 		}
 		return (seeders);
@@ -281,25 +285,30 @@ class bittorrent
 {
 	constructor()
 	{
-		this.protocol = "BitTorrent protocol";
-		this.peer_id = "2b90241f8e95d53cacf0f8c72a92e46b57911600";
 		this.torrents = Object();
 	}
 
 	addTorrentFromFile(file)
 	{
 		let buffer = fs.readFileSync(file);
-
-		var torrent = new torrent(this, new bencode(buffer).data);
-
-		if ('key' in this.torrents)
-			throw "Torrent " + t.info.name + " already existe info_hash=[" + t.info_hash + "]";
-		else
+		try
 		{
-			this.torrents[t.info_hash] = torrent;
-			torrent.on()
-			torrent.start();
+			var new_torrent = new torrent(this, new bencode(buffer).data);
+			if ('key' in this.torrents)
+				throw "Torrent " + new_torrent.info.name + " already existe info_hash=[" + new_torrent.info_hash + "]";
+			else
+			{
+				this.torrents[new_torrent.info_hash] = new_torrent;
+				new_torrent.start();
+			}
 		}
+		catch (e)
+		{
+			throw 'Add torrent file : ' + e;
+			console.log(e);
+		}
+
+
 	}
 }
 
