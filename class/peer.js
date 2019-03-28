@@ -8,7 +8,6 @@ const EventEmitter = require('events');
 	{
 		let i = 0;
 		let str = "";
-
 		while (i < offset)
 		{
 			let b = 0;
@@ -175,29 +174,14 @@ class peer extends EventEmitter
 		block.copy(this.piece_buffer, begin);
 
 		if (begin + block.length < this.torrent.info.piece_length)
-			this.ask_block(0, begin + block.length);
+			this.ask_block(index, begin + block.length);
 		else
-		{
-			let hash = Buffer.from(this.torrent.info.pieces.slice(0, 20), "binary");
-
-			console.log("----------------");
-			console.log(hash);
-			console.log(sha1(this.piece_buffer));
-			console.log("----------------");
-	//		this.torrent.piece[index] = this.piece_buffer;
-
-			let i = Math.floor(index / 8);
-			let bit = 0x80 >> (index % 8);
-			this.torrent.bitfield[i] |= bit;
-
-			this.torrent.bitfield_set(index);
-
-		}
+			this.emit('piece_finished', index, this.piece_buffer);
 	}
 
 	ask_block(piece, start = 0)
 	{
-		//		ASK THE RIGHT OFFSET - LAST BLOCK MAY BE CUT
+		//	ASK THE RIGHT OFFSET - LAST BLOCK MAY BE CUT
 		/* 2^14 (16 kiB) */
 		let offset = Math.pow(2, 14);
 

@@ -1,13 +1,15 @@
+const EventEmitter = require('events');
 const fs = require('fs');
-const ByteBuffer = require("bytebuffer");
 
 const http = require('http');
 const net = require('net');
 const sha1 = require('sha1');
+const path = require('path');
 
 const bencode = require('../class/bencode');
 const peer = require('../class/peer');
-const EventEmitter = require('events');
+
+const download_folder = "./download/";
 
 class torrent extends EventEmitter
 {
@@ -19,27 +21,17 @@ class torrent extends EventEmitter
 		this.nb_peers = 0;
 
 		this.peers_connected = Array();
-		this.build(obj);
-		
+		this.peers_working = Array();
+		this.peers_idle = Array();
+
 
 		this.peer_id = "2b90241f8e95d53cacf0f8c72a92e46b57911600";
 		this.protocol = "BitTorrent protocol";
-	}
+		this.piece = Array();
 
-	start()
-	{
-		try
-		{
-			this.make_announce();
-		}
-		catch(e)
-		{
-			console.log(e);
-		}
-	}
 
-	build(obj)
-	{
+
+
 		this.announce = obj.announce;
 		this.info = Object();
 		this.info.piece_length = obj.info["piece length"];
@@ -66,10 +58,23 @@ class torrent extends EventEmitter
 
 			this.nb_pieces = Math.ceil(this.info.length / this.info.piece_length);
 			this.bitfield_length = Math.ceil(this.nb_pieces / 8);
+
 			this.bitfield = Buffer.alloc(this.bitfield_length);
-			this.bitfield = new Buffer.alloc(this.bitfield_length);
+			this.bitfield_working = Buffer.alloc(this.bitfield_length);
+
+
 			if ("md5sum" in obj.info)
 				this.info.md5sum = obj.info["md5sum"];
+			fs.open(download_folder + this.info.name, "a+", 0o666, (err, fd) => {
+				if (err)
+				{
+				//	throw err;
+					console.log(err);
+					return;
+				}
+				this.file = fd; 
+				this.emit('ready');					// WARNING ASYNCHRONOUS VULN
+			})
 		}
 		if ("private" in obj["info"])
 			this.info.private = obj.info.private;
@@ -85,100 +90,12 @@ class torrent extends EventEmitter
 			this.encoding = obj["encoding"];
 	}
 
-	check_piece()
+	start()
 	{
-		bitfield_set(this.bitfield[index]);
+		this.make_announce();
 	}
 
-	check_local()
-	{
-		// check all local resources
-		// all sha1 pieces
-		// build bitfield
-	}
-
-	bitfield_set(index)
-	{
-		let i = Math.floor(index / 8);
-		let bit = 0x80 >> (index % 8);
-
-		if (i >= this.bitfield.length)
-			throw "bitfield_set bad offset";
-
-		this.bitfield[i] |= bit;
-		// broadcast to peer than I have now this piece
-	}
-	
-	bitfield_read(bitfield, index)
-	{
-		let i = Math.floor(index / 8);
-		let bit = 0x80 >> (index % 8);
-
-		if (i >= bitfield.length)
-			throw "bitfield_read bad offset";
-		bitfield[i] |= bit
-
-		return ;
-	}
-
-
-	download()
-	{
-		/*
-		var promise = new Promise((resolve, reject) => {
-				peer.ask_block(0);
-				peer.onload = () => resolve(value);
-				peer.onfail = () => reject(value);
-			}
-		);
-		promise
-			.then((peer) => {
-				ask_next_part_to(peer);
-			})
-			.catch ((piece) => {
-				ask_somebody(piece);
-		});
-		*/
-	}
-
-	add_peers(new_peers)
-	{
-		Object.assign(this.peers, new_peers);
-		if (Object.keys(this.peers).length != this.nb_peers)
-		{
-			this.nb_peers = Object.keys(this.peers).length;
-			this.connect_all_peers();
-		}
-	}
-
-	connect_all_peers()
-	{
-
-		Object.keys(this.peers).forEach((key) => {
-			let peer = this.peers[key];
-
-			peer.connection(this);
-
-			peer.on('ready', () => {
-				console.log('READY');
-				console.log(peer.ip);
-				// look wich piece must be downloaded
-				// peer.ask_block(piece, start = 0)
-			});
-
-		});
-
-/*		this.peers.forEach(peer => {
-			peer.connection(this.bt_cli, this);
-			peer.on('ready', () => {
-				console.log('READY');
-				console.log(peer.ip);
-				// look wich piece must be downloaded
-				// peer.ask_block(piece, start = 0)
-			});
-		});
-		*/
-	}
+/*-- ANNOUNCER ------------------------------------------------------------------------------------*/
 
 	make_announce()
 	{
@@ -279,6 +196,87 @@ class torrent extends EventEmitter
 		return (seeders);
 	}
 
+/*-- FILE MANAGER ---------------------------------------------------------------------------------*/
+
+	bitfield_set(index)
+	{
+		let i = Math.floor(index / 8);
+		let bit = 0x80 >> (index % 8);
+		
+		if (i >= this.bitfield.length)
+			throw "bitfield_set bad offset";
+
+		this.bitfield[i] |= bit;			// ATTENTION A NE PAS ADDITIONER ET DECALER LES BITS
+	}
+	
+	bitfield_read(bitfield, index)
+	{
+		let i = Math.floor(index / 8);
+		let bit = 0x80 >> (index % 8);
+
+		if (i >= bitfield.length)
+			throw "bitfield_read bad offset";
+		return (bitfield[i] & bit);
+	}
+
+	check_piece(index, piece)
+	{
+		let hash = Buffer.from(this.info.pieces.slice(index * 20, index * 20 + 20), "binary");
+		let sha1_new_piece = sha1(piece);
+		let i = 0;
+		let hash2 = Buffer.alloc(20);
+		while (i < 20)
+		{
+			hash2[i] = parseInt(sha1_new_piece.substring(i * 2, i * 2 + 2), 16);
+			i++;
+		}
+		if (Buffer.compare(hash, hash2))
+			return false;
+		return true;
+	}
+
+	check_local()
+	{
+		// check all local resources
+		// all sha1 pieces
+		// build bitfield
+	}
+
+/*-- PEERS CONTROLER ------------------------------------------------------------------------------*/
+
+	add_peers(new_peers)
+	{
+		Object.assign(this.peers, new_peers);
+		if (Object.keys(this.peers).length != this.nb_peers)
+		{
+			this.nb_peers = Object.keys(this.peers).length;
+			this.connect_all_peers();
+		}
+	}
+
+	connect_all_peers()
+	{
+		Object.keys(this.peers).forEach((key) => {
+			let peer = this.peers[key];
+
+			peer.connection(this);
+			peer.on('ready', () => {
+				// look wich piece must be downloaded
+				// peer.ask_block(piece, start = 0)
+			});
+			peer.on('piece_finished', (index, piece) => {
+				if (this.check_piece(index, piece))
+				{
+					fs.write(this.file, piece, 0, piece.length, (index * this.info.piece_length), (err, bytesWritten, buffer) => {
+						if (err) throw err; // AND RETRY
+						this.bitfield_set(index);
+						// broadcast to peer than I have now this piece
+						peer.ask_block(index + 1, piece);
+					})
+				}
+			});
+		});
+	}
 }
 
 class bittorrent
@@ -299,7 +297,10 @@ class bittorrent
 			else
 			{
 				this.torrents[new_torrent.info_hash] = new_torrent;
-				new_torrent.start();
+
+				new_torrent.on('ready', () => {
+					new_torrent.start();
+				});
 			}
 		}
 		catch (e)
