@@ -9,7 +9,26 @@ const path = require('path');
 const bencode = require('../class/bencode');
 const peer = require('../class/peer');
 
-const download_folder = "./download/";
+const download_folder = "/tmp/download/";
+
+function	print_buff_bin(buf, start, offset)
+{
+	let i = 0;
+	let str = "";
+	while (i < offset)
+	{
+		let b = 0;
+		while (b < 8)
+		{
+			let nb =  buf[start + i];
+			str += (nb >> (7 - b)) & 0x01;
+			b++;
+		}
+		str += " ";
+		i++;
+	}
+	console.log(str);
+}
 
 class torrent extends EventEmitter
 {
@@ -28,9 +47,6 @@ class torrent extends EventEmitter
 		this.peer_id = "2b90241f8e95d53cacf0f8c72a92e46b57911600";
 		this.protocol = "BitTorrent protocol";
 		this.piece = Array();
-
-
-
 
 		this.announce = obj.announce;
 		this.info = Object();
@@ -62,7 +78,6 @@ class torrent extends EventEmitter
 			this.bitfield = Buffer.alloc(this.bitfield_length);
 			this.bitfield_working = Buffer.alloc(this.bitfield_length);
 
-
 			if ("md5sum" in obj.info)
 				this.info.md5sum = obj.info["md5sum"];
 			fs.open(download_folder + this.info.name, "a+", 0o666, (err, fd) => {
@@ -72,7 +87,7 @@ class torrent extends EventEmitter
 					console.log(err);
 					return;
 				}
-				this.file = fd; 
+				this.file = fd;
 				this.emit('ready');					// WARNING ASYNCHRONOUS VULN
 			})
 		}
@@ -198,22 +213,31 @@ class torrent extends EventEmitter
 
 /*-- FILE MANAGER ---------------------------------------------------------------------------------*/
 
-	bitfield_set(index)
+	bitfield_set(bitfield, index)
 	{
 		let i = Math.floor(index / 8);
 		let bit = 0x80 >> (index % 8);
 		
-		if (i >= this.bitfield.length)
+		if (i >= bitfield.length)
 			throw "bitfield_set bad offset";
-
-		this.bitfield[i] |= bit;			// ATTENTION A NE PAS ADDITIONER ET DECALER LES BITS
+		if (!(bitfield[i] & bit))
+			bitfield[i] |= bit;
 	}
-	
+
+	bitfield_unset(bitfield, index)
+	{
+		let i = Math.floor(index / 8);
+		let bit = 0x80 >> (index % 8);
+		
+		if (i >= bitfield.length)
+			throw "bitfield_set bad offset";
+		bitfield[i] &= ~(bit);
+	}
+
 	bitfield_read(bitfield, index)
 	{
 		let i = Math.floor(index / 8);
 		let bit = 0x80 >> (index % 8);
-
 		if (i >= bitfield.length)
 			throw "bitfield_read bad offset";
 		return (bitfield[i] & bit);
@@ -242,7 +266,54 @@ class torrent extends EventEmitter
 		// build bitfield
 	}
 
+	next_piece(index = 0)
+	{
+		let i = Math.floor(index / 8);
+		let bit = 0x80 >> (index % 8);
+
+		while (i < this.bitfield.length
+			&& ((this.bitfield[i] === 0xff)
+ 			|| ((this.bitfield[i] | this.bitfield_working[i]) === 0xff)))
+			i++;
+
+		if (i < this.bitfield.length)
+		{
+			let sector = this.bitfield[i] | this.bitfield_working[i];
+			let j = index % 8;
+			while ((sector & bit))
+			{
+				bit = bit >> 1;
+				j++;
+			}
+			if (bit)
+				return i * 8 + j;
+		}
+		return (-1);
+	}
+
+
 /*-- PEERS CONTROLER ------------------------------------------------------------------------------*/
+
+	give_job(peer)
+	{
+		let index = this.next_piece(0);
+			if (index == -1)
+				return console.log ("BORING !");
+
+		while (!this.bitfield_read(peer.bitfield, index))
+		{
+			index = this.next_piece(index + 1);
+			if (index == -1)
+				return console.log ("BORING !");
+		}
+		this.bitfield_set(this.bitfield_working, index);
+		if (index >= 0)
+			peer.ask_block(index);
+		else
+			console.log("this peer don't have intereting piece now");
+
+
+	}
 
 	add_peers(new_peers)
 	{
@@ -258,22 +329,39 @@ class torrent extends EventEmitter
 	{
 		Object.keys(this.peers).forEach((key) => {
 			let peer = this.peers[key];
-
 			peer.connection(this);
+
 			peer.on('ready', () => {
-				// look wich piece must be downloaded
-				// peer.ask_block(piece, start = 0)
+				this.give_job(peer);
 			});
+
 			peer.on('piece_finished', (index, piece) => {
+				this.give_job(peer);
+				this.bitfield_unset(this.bitfield_working, index);
+
 				if (this.check_piece(index, piece))
 				{
 					fs.write(this.file, piece, 0, piece.length, (index * this.info.piece_length), (err, bytesWritten, buffer) => {
-						if (err) throw err; // AND RETRY
-						this.bitfield_set(index);
+						if (err) throw err; // AND RETRY WARNING NON CATCHED
+						this.bitfield_set(this.bitfield, index);
 						// broadcast to peer than I have now this piece
-						peer.ask_block(index + 1, piece);
+	//					console.log('--- ' + index + ' --VALIDATED-------')
 					})
 				}
+				else
+				{
+	//				console.log('--- ' + index + ' -- FAILED----')
+					// RETRY
+				}
+
+
+				console.log('');
+				console.log('');
+				console.log('');
+				console.log('');
+				print_buff_bin(this.bitfield, 0, this.bitfield_working.length);
+				console.log('');
+				print_buff_bin(this.bitfield_working, 0,this.bitfield_working.length);
 			});
 		});
 	}

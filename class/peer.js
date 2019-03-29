@@ -51,7 +51,7 @@ class peer extends EventEmitter
 		this.info_hash = ByteBuffer.fromHex(torrent.info_hash).buffer;
 
 		this.buffer = Buffer.alloc(0);
-		this.bitfield = Buffer.alloc(0);
+		this.bitfield = Buffer.alloc(this.torrent.bitfield_length);
 		this.piece_buffer = Buffer.alloc(torrent.info.piece_length);
 
 		this.client = new net.Socket();
@@ -63,7 +63,6 @@ class peer extends EventEmitter
 				this.read(data);
 			})
 			.on('close', () => {
-				console.log('Connection closed ' + this.ip + ':' + this.port);
 				this.handshacked = false;
 			})
 			.on('error', (err) => {
@@ -92,8 +91,7 @@ class peer extends EventEmitter
 
 		if (length == 0)
 		{
-		//	console.log("Keep alive");
-			this.buffer = this.buffer.slice(4);
+			this.buffer = this.buffer.slice(4);		// Keep alive
 			return ;
 		}
 
@@ -105,13 +103,13 @@ class peer extends EventEmitter
 		let payload = this.buffer.slice(5, length);
 
 		if (id == 0)							// Choke
+		{
 			this.am_choked = true;
+		}
 		else if (id == 1)						// Unchoke
 		{
 			this.am_choked = false;
-			// ASK TO CLI WICH PART CAN BE DOWNLOADED
 			this.emit('ready');
-			this.ask_block(0);
 		}
 		else if (id == 2)						// Interested
 			this.peer_interested = true;
@@ -140,8 +138,7 @@ class peer extends EventEmitter
 	{
 		if (payload.length != this.torrent.bitfield_length)
 		{
-			this.client.destroy();
-			// REMOVE SELF FROM this.torrent.peer
+			this.client.destroy(); // REMOVE SELF FROM this.torrent.peer
 			console.log("Bad bitfield size from " + this.ip + "; Expected: " + this.torrent.bitfield_length + ", got: " + length);
 		}
 		this.bitfield = payload;
@@ -156,21 +153,18 @@ class peer extends EventEmitter
 
 			// CHECK INDEX OVERFLOW
 			if (index >= this.bitfield.length)
-				throw "bitfield_set bad offset";
+				throw "bitfield set bad offset";
 			this.bitfield[index] |= bit;
 	}
 
 	recieve_block(payload)
 	{
-
 		// VERIFIER QUE LA PIECE RECUE EST BIEN CELLE DEMANDE
 		// SINON POSSIBILITEE D'INJECTION
 		// OU DE DEPASSEMENT
-
 		let index = payload.readUInt32BE(0);
 		let begin = payload.readUInt32BE(4);
 		let block = payload.slice(8, payload.length);
-
 		block.copy(this.piece_buffer, begin);
 
 		if (begin + block.length < this.torrent.info.piece_length)
@@ -225,11 +219,9 @@ class peer extends EventEmitter
 		}
 		this.buffer = this.buffer.slice(49 + pstrlen);
 		this.handshacked = true;
-		console.log("Connected to " + this.ip);
 		//
 		// I SHOULD SEND MY BITFIELD HERE
 		//
-		this.emit('ready');
 	}
 }
 
