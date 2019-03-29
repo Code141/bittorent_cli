@@ -41,12 +41,16 @@ class torrent extends EventEmitter
 
 		this.peers_connected = Array();
 		this.peers_working = Array();
-		this.peers_idle = Array();
+		this.peers_boring = Array();
 
 
 		this.peer_id = "2b90241f8e95d53cacf0f8c72a92e46b57911600";
 		this.protocol = "BitTorrent protocol";
+
 		this.piece = Array();
+
+
+
 
 		this.announce = obj.announce;
 		this.info = Object();
@@ -54,7 +58,7 @@ class torrent extends EventEmitter
 		this.info.pieces = obj.info["pieces"];
 		this.info.name = obj.info["name"];
 		this.info_hash = sha1(Buffer.from(bencode.encode(obj.info), 'binary'));
-	
+
 		if ("files" in obj.info)
 		{
 			// Foreach
@@ -83,7 +87,7 @@ class torrent extends EventEmitter
 			fs.open(download_folder + this.info.name, "a+", 0o666, (err, fd) => {
 				if (err)
 				{
-				//	throw err;
+					//	throw err;
 					console.log(err);
 					return;
 				}
@@ -107,10 +111,14 @@ class torrent extends EventEmitter
 
 	start()
 	{
-		this.make_announce();
+		let interval = 3;
+		const toto = setInterval(() => {
+			this.make_announce();
+		}, 1000);
+
 	}
 
-/*-- ANNOUNCER ------------------------------------------------------------------------------------*/
+	/*-- ANNOUNCER ------------------------------------------------------------------------------------*/
 
 	make_announce()
 	{
@@ -160,12 +168,12 @@ class torrent extends EventEmitter
 					{
 						console.log(e);
 					}
-
+					console.log(response.data)
 				});
 		})
-		.on("error", (err) => {
-			console.log("Error: " + err.message);
-		});
+			.on("error", (err) => {
+				console.log("Error: " + err.message);
+			});
 	}
 
 	url_encode(url)
@@ -211,13 +219,13 @@ class torrent extends EventEmitter
 		return (seeders);
 	}
 
-/*-- FILE MANAGER ---------------------------------------------------------------------------------*/
+	/*-- FILE MANAGER ---------------------------------------------------------------------------------*/
 
 	bitfield_set(bitfield, index)
 	{
 		let i = Math.floor(index / 8);
 		let bit = 0x80 >> (index % 8);
-		
+
 		if (i >= bitfield.length)
 			throw "bitfield_set bad offset";
 		if (!(bitfield[i] & bit))
@@ -228,7 +236,7 @@ class torrent extends EventEmitter
 	{
 		let i = Math.floor(index / 8);
 		let bit = 0x80 >> (index % 8);
-		
+
 		if (i >= bitfield.length)
 			throw "bitfield_set bad offset";
 		bitfield[i] &= ~(bit);
@@ -273,7 +281,7 @@ class torrent extends EventEmitter
 
 		while (i < this.bitfield.length
 			&& ((this.bitfield[i] === 0xff)
- 			|| ((this.bitfield[i] | this.bitfield_working[i]) === 0xff)))
+				|| ((this.bitfield[i] | this.bitfield_working[i]) === 0xff)))
 			i++;
 
 		if (i < this.bitfield.length)
@@ -292,13 +300,13 @@ class torrent extends EventEmitter
 	}
 
 
-/*-- PEERS CONTROLER ------------------------------------------------------------------------------*/
+	/*-- PEERS CONTROLER ------------------------------------------------------------------------------*/
 
 	give_job(peer)
 	{
 		let index = this.next_piece(0);
-			if (index == -1)
-				return console.log ("BORING !");
+		if (index == -1)
+			return console.log ("BORING !");
 
 		while (!this.bitfield_read(peer.bitfield, index))
 		{
@@ -311,9 +319,15 @@ class torrent extends EventEmitter
 			peer.ask_block(index);
 		else
 			console.log("this peer don't have intereting piece now");
-
-
 	}
+
+	for_all_peers(cb)
+	{
+		Object.keys(this.peers).forEach((key) => {
+			cb(this.peers[key]);
+		});
+	}
+
 
 	add_peers(new_peers)
 	{
@@ -327,10 +341,9 @@ class torrent extends EventEmitter
 
 	connect_all_peers()
 	{
-		Object.keys(this.peers).forEach((key) => {
-			let peer = this.peers[key];
-			peer.connection(this);
+		this.for_all_peers((peer) => {
 
+			peer.connection(this);
 			peer.on('ready', () => {
 				this.give_job(peer);
 			});
@@ -344,13 +357,16 @@ class torrent extends EventEmitter
 					fs.write(this.file, piece, 0, piece.length, (index * this.info.piece_length), (err, bytesWritten, buffer) => {
 						if (err) throw err; // AND RETRY WARNING NON CATCHED
 						this.bitfield_set(this.bitfield, index);
+						this.for_all_peers((peer) => {
+							peer.send_have(index);
+						})
 						// broadcast to peer than I have now this piece
-	//					console.log('--- ' + index + ' --VALIDATED-------')
+						//					console.log('--- ' + index + ' --VALIDATED-------')
 					})
 				}
 				else
 				{
-	//				console.log('--- ' + index + ' -- FAILED----')
+					//				console.log('--- ' + index + ' -- FAILED----')
 					// RETRY
 				}
 
@@ -358,10 +374,11 @@ class torrent extends EventEmitter
 				console.log('');
 				console.log('');
 				console.log('');
-				console.log('');
 				print_buff_bin(this.bitfield, 0, this.bitfield_working.length);
 				console.log('');
 				print_buff_bin(this.bitfield_working, 0,this.bitfield_working.length);
+				console.log('----------------------------------------------------------------------');
+				console.log('peers = ' + Object.keys(this.peers).length);
 			});
 		});
 	}

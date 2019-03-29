@@ -18,13 +18,6 @@ router
 				console.log("Add torrent file : " + e);
 			}
 		})
-
-		try {
-			bt_cli.addTorrentFromFile(torrent_folder + "tmw-wave.torrent");
-		} catch (e) {
-			console.log("ERROR : " + e);
-		}
-
 		res.send({status: true});
 	})
 

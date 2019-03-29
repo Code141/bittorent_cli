@@ -144,6 +144,22 @@ class peer extends EventEmitter
 		this.bitfield = payload;
 	}
 
+	send_have(index)
+	{
+	/*	let offset = Math.pow(2, 14);
+
+		let buffer = Buffer.alloc(17);
+
+		buffer.writeUInt32BE(13, 0);
+		buffer.writeUInt8(6, 4);
+		buffer.writeUInt32BE(piece, 5);
+		buffer.writeUInt32BE(start, 9);
+		buffer.writeUInt32BE(offset, 13);
+
+		this.client.write(buffer, 'binary');
+*/
+	}
+
 	recieve_have(payload)
 	{
 			let payload_int = payload.readUInt32BE(0);
