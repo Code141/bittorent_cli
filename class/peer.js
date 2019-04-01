@@ -43,6 +43,7 @@ class peer extends EventEmitter
 			})
 			.on('close', () => {
 				this.handshacked = false;
+				console.log("CLOSE");
 			})
 			.on('error', (err) => {
 				console.log(err);
@@ -126,10 +127,10 @@ class peer extends EventEmitter
 	send_bitfield()
 	{
 		let buffer = Buffer.alloc(this.torrent.bitfield.length + 5);
-		buffer.writeUInt32BE(this.torrent.bitfield.length + 5, 0);
+		buffer.writeUInt32BE((this.torrent.bitfield.length + 1), 0);
 		buffer.writeUInt8(5, 4);
 		this.torrent.bitfield.copy(buffer, 5);
-		this.client.write(buffer, 'binary');
+		this.client.write(buffer, 'binary')
 	}
 
 
@@ -162,7 +163,6 @@ class peer extends EventEmitter
 
 	recieve_block(payload)
 	{
-		console.log("RECIEVE");
 		// VERIFIER QUE LA PIECE RECUE EST BIEN CELLE DEMANDE
 		// SINON POSSIBILITEE D'INJECTION
 		// OU DE DEPASSEMENT
@@ -179,7 +179,6 @@ class peer extends EventEmitter
 
 	ask_block(piece, start = 0)
 	{
-		console.log("ASK BLOCK " +this.info_hash + "  "+ piece);
 		//	ASK THE RIGHT OFFSET - LAST BLOCK MAY BE CUT
 		/* 2^14 (16 kiB) */
 		let offset = Math.pow(2, 14);

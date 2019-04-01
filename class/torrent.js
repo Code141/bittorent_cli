@@ -1,6 +1,7 @@
 const EventEmitter = require('events');
 const sha1 = require('sha1');
 const fs = require('fs');
+const path = require('path');
 
 const bencode = require('../class/bencode');
 
@@ -27,44 +28,34 @@ function	print_buff_bin(buf, start, offset)
 
 class file extends EventEmitter
 {
-	constructor (file_name)
+	constructor (file_path, length, offset = 0)
 	{
 		super();
 
-/*
-		file_name = download_folder + file_name;
+		this.basename = path.basename(path.join(file_path));
+		this.dirname = path.dirname(path.join(download_folder + path.join(file_path)));
 
-		console.log("FILENAME :" +file_name);
+		this.path = path.join(this.dirname, this.basename);
 
-		let dir =  path.dirname(file_name);
+		this.length = length;
+		this.offset = offset;
 
 
-		if (!fs.existsSync(dir))
-			fs.mkdir(path.dirname(file_name), { recursive: true }, (err) => {
-				if (err) throw err;
-			});
-
-		fs.writeFile(path.dirname(file_name) + path.basename(file_name), "r+", (err) => {
-			if (err)
-			{
-				console.log(err);
-				throw err;
-			}
-
-			this.fd = fd;
-			console.log("The file was succesfully saved!");
-		})
-		*/
-
+		if (!fs.existsSync(this.dirname))
+			fs.mkdirSync(path.dirname(file_name), { recursive: true });
+		fs.writeFileSync(this.path, "", {flag: "a+", mode: 0o666});
 	}
 
 }
 class torrent extends EventEmitter
 {
-	constructor (bt_cli, obj)
+	constructor (bt_cli)
 	{
 		super();
 		this.bt_cli = bt_cli;
+		this.peer_id = this.bt_cli.peer_id;
+		this.protocol = this.bt_cli.protocol;
+
 		this.peers = Object();
 		this.nb_peers = 0;
 
@@ -73,11 +64,11 @@ class torrent extends EventEmitter
 		this.peers_boring = Array();
 		this.files = Array();
 
-		this.peer_id = "2b90241f8e95d53cacf0f8c72a92e46b57911600";
-		this.protocol = "BitTorrent protocol";
+	}
 
-		this.piece = Array();
-
+	build_from_torrent_file(obj)
+	{
+		return new Promise((resolve, reject) => {
 
 		this.announce = obj.announce;
 		this.info = Object();
@@ -86,14 +77,31 @@ class torrent extends EventEmitter
 		this.info.name = obj.info["name"];
 		this.info_hash = sha1(Buffer.from(bencode.encode(obj.info), 'binary'));
 
+		// optionals
+		if ("private" in obj["info"])
+			this.info.private = obj.info.private;
+		if ("announce list" in obj)
+			this.announce_list = obj["announce list"];
+		if ("creation date" in obj)
+			this.creation_date = obj["creation date"];
+		if ("comment" in obj)
+			this.comment = obj["comment"];
+		if ("created by" in obj)
+			this.created_by = obj["created by"];
+		if ("encoding" in obj)
+			this.encoding = obj["encoding"];
+		// optionals
+
 		if ("files" in obj.info)
 		{
+			let offset = 0
 			// Foreach
 
 			console.log(obj.info.files);
 			for (file in this.obj.files)
 			{
-				this.files.push = new file(obj.path + file.path, obj.info.lenght);
+				offset += file.lenght;
+				this.files.push = new file(file.path, obj.info.lenght, offset);
 				//if ("md5sum" in obj.info)
 				//	this.file.md5sum = obj.info["md5sum"];
 			}
@@ -112,26 +120,17 @@ class torrent extends EventEmitter
 
 			if ("md5sum" in obj.info)
 				this.info.md5sum = obj.info["md5sum"];
-			this.check_local();
+
+			this.check_local_files()
+				.then(() => {
+					resolve();
+				})
+				.catch(() => {
+				});
 		}
+		});
 
-		// optionals
-		if ("private" in obj["info"])
-			this.info.private = obj.info.private;
-		if ("announce list" in obj)
-			this.announce_list = obj["announce list"];
-		if ("creation date" in obj)
-			this.creation_date = obj["creation date"];
-		if ("comment" in obj)
-			this.comment = obj["comment"];
-		if ("created by" in obj)
-			this.created_by = obj["created by"];
-		if ("encoding" in obj)
-			this.encoding = obj["encoding"];
-
-		this.emit("ready");
 	}
-
 	start()
 	{
 		/*
@@ -140,8 +139,8 @@ class torrent extends EventEmitter
 			this.make_announce();
 		}, interval);
 		 */
-
-			this.connect_all_peers();
+		console.log(this.nb_peers);
+		this.connect_all_peers();
 	}
 
 	/*-- FILE MANAGER ---------------------------------------------------------------------------------*/
@@ -195,38 +194,43 @@ class torrent extends EventEmitter
 			return true;
 	}
 
-	check_local(fd)
+	check_local_files()
 	{
-		let readableStream = fs.createReadStream(download_folder + this.info.name, {
-			flags: 'r+'
-		});
+		return new Promise((resolve, reject) => {
+			let index = 0;
+			var buffer = Buffer.alloc(0);
 
-		let index = 0;
-		var buffer = Buffer.alloc(0);
-
-		readableStream
-			.on('data', (chunk) => {
-
-				buffer = Buffer.concat([buffer, chunk]);
-				let current_piece_length = this.info.piece_length;
-
-				while (buffer.length >= current_piece_length)
-				{
-					let piece = Buffer.from( buffer, 0, current_piece_length);
-					if (this.check_piece(index, piece))
-						this.bitfield_set(this.bitfield, index);
-					buffer = buffer.slice(current_piece_length);
-					print_buff_bin(this.bitfield, 0, Math.ceil(index/8));
-					index++;
-				}
-			})
-			.on('end', () => {
-				console.log('---------------------------------- FILE LOADED ----------------------------------');
-				readableStream.destroy();
-			})
-			.on("close", () =>{
-				console.log('                       ----------- FILE CLOSED ----------                        ');
+			// PUT WHILE HERE
+			let readableStream = fs.createReadStream(download_folder + this.info.name, {
+				flags: 'r+'
 			});
+
+			readableStream
+				.on('data', (chunk) => {
+
+					buffer = Buffer.concat([buffer, chunk]);
+					let current_piece_length = this.info.piece_length;
+
+					while (buffer.length >= current_piece_length)
+					{
+						let piece = Buffer.from( buffer, 0, current_piece_length);
+						if (this.check_piece(index, piece))
+							this.bitfield_set(this.bitfield, index);
+						buffer = buffer.slice(current_piece_length);
+						print_buff_bin(this.bitfield, 0, Math.ceil(index/8));
+						index++;
+					}
+				})
+				.on('end', () => {
+					console.log('---------------------------------- FILE LOADED ----------------------------------');
+					// JUMP ON NEXT FILE
+					readableStream.destroy();
+				})
+				.on("close", () =>{
+					console.log('                       ----------- FILE CLOSED ----------                        ');
+					resolve();		// warning to resolve after multiples files
+				});
+		});
 
 	}
 
@@ -239,7 +243,6 @@ class torrent extends EventEmitter
 			&& ((this.bitfield[i] === 0xff)
 				|| ((this.bitfield[i] | this.bitfield_working[i]) === 0xff)))
 			i++;
-
 		if (i < this.bitfield.length)
 		{
 			let sector = this.bitfield[i] | this.bitfield_working[i];
@@ -277,7 +280,6 @@ class torrent extends EventEmitter
 		}
 		return (-1);
 	}
-
 
 
 	/*-- PEERS CONTROLER ------------------------------------------------------------------------------*/
@@ -320,14 +322,12 @@ class torrent extends EventEmitter
 		if (Object.keys(this.peers).length != this.nb_peers)
 		{
 			this.nb_peers = Object.keys(this.peers).length;
-			this.connect_all_peers();
 		}
 	}
 
 	connect_all_peers()
 	{
 		this.for_all_peers((peer) => {
-
 			peer.connection(this);
 			peer.on('ready', () => {
 				this.give_job(peer);

@@ -28,53 +28,58 @@ class bittorrent
 
 	make_announce(torrent)
 	{
-		if (torrent.announce.search("udp") > -1)
-		{
-			console.log("UPD TRACKER NOT SUPORTED YET");
-			return;
-		}
-		let url = torrent.announce
-			+ "?" + "info_hash="	+ this.url_encode(torrent.info_hash)
-			+ "&" + "peer_id="		+ this.url_encode(this.peer_id)
-			+ "&" + "port="			+ 6881
-			+ "&" + "uploaded="		+ 0
-			+ "&" + "downloaded="	+ 0
-			+ "&" + "left="			+ 0
-			+ "&" + "event="		+ "started"
-			+ "&" + "numwant="		+ 50
-			+ "&" + "compact="		+ 1;
+		return new Promise((resolve, reject) => {
 
-		http.get(url, (resp) => {
-			let data = '';
-			resp.setEncoding('binary')
-				.on('data', (chunk) => { data += chunk; })
-				.on('end', () => {
-					let response = new bencode(Buffer.from(data, 'binary'));
-					if (response.data['failure reason'])
-					{
-						console.log(response.data);
-						return;
-					}
-					let str_peers = response.data.peers;
-					if (typeof str_peers === "undefined")
-					{
-						console.log("no list peers given");
-						return;
-					}
-					try
-					{
-						torrent.add_peers(this.get_ip(str_peers))
-					}
-					catch (e)
-					{
-						console.log(e);
-					}
-					console.log(response.data)
+			if (torrent.announce.search("udp") > -1)
+			{
+				console.log("UPD TRACKER NOT SUPORTED YET");
+				return;
+			}
+
+			let url = torrent.announce
+				+ "?" + "info_hash="	+ this.url_encode(torrent.info_hash)
+				+ "&" + "peer_id="		+ this.url_encode(this.peer_id)
+				+ "&" + "port="			+ 6881
+				+ "&" + "uploaded="		+ 0
+				+ "&" + "downloaded="	+ 0
+				+ "&" + "left="			+ 0
+				+ "&" + "event="		+ "started"
+				+ "&" + "numwant="		+ 50
+				+ "&" + "compact="		+ 1;
+
+			http.get(url, (resp) => {
+				let data = '';
+				resp.setEncoding('binary')
+					.on('data', (chunk) => { data += chunk; })
+					.on('end', () => {
+						let response = new bencode(Buffer.from(data, 'binary'));
+						if (response.data['failure reason'])
+						{
+							console.log(response.data);
+							return;
+						}
+						let str_peers = response.data.peers;
+						if (typeof str_peers === "undefined")
+						{
+							console.log("no list peers given");
+							return;
+						}
+						try
+						{
+							torrent.add_peers(this.get_ip(str_peers))
+						}
+						catch (e)
+						{
+							console.log(e);
+						}
+						console.log(response.data)
+						resolve();
+					});
+			})
+				.on("error", (err) => {
+					console.log("Error: " + err.message);
 				});
 		})
-			.on("error", (err) => {
-				console.log("Error: " + err.message);
-			});
 	}
 
 	url_encode(url)
@@ -117,24 +122,28 @@ class bittorrent
 		return (seeders);
 	}
 
-
 	addTorrentFromFile(file)
 	{
 		let buffer = fs.readFileSync(file);
 //		try {
-			var new_torrent = new torrent(this, new bencode(buffer).data);
+			let data = new bencode(buffer).data;
+			var new_torrent = new torrent(this);
 
-			if ('key' in this.torrents)
+			let buiding = new_torrent.build_from_torrent_file(data);
+			let announce = this.make_announce(new_torrent);
+
+			if (data.info_hash in this.torrents)
 				throw "Torrent " + new_torrent.info.name + " already existe info_hash=[" + new_torrent.info_hash + "]";
 			else
 			{
-				this.torrents[new_torrent.info_hash] = new_torrent;
-				this.make_announce(new_torrent);
+				this.torrents[data.info_hash] = new_torrent;
+				Promise.all([buiding, announce])
+					.then(() => {
+						new_torrent.start();
+					})
+					.catch(() => {
 
-				new_torrent.on('ready', () => {
-					console.log("ANNOUNCE");
-					new_torrent.start();
-				});
+					});
 			}
 //		} catch (e) { throw 'Add torrent file : ' + e; console.log(e); }
 
