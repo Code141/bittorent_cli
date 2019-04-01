@@ -12,11 +12,8 @@ router
 	.get('/', (req, res) => {
 
 		fs.readdirSync(torrent_folder).forEach(file => {
-			try {
 				bt_cli.addTorrentFromFile(torrent_folder + file);
-			} catch (e) {
 				console.log("Add torrent file : " + e);
-			}
 		})
 		res.send({status: true});
 	})

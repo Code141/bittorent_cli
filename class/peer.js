@@ -3,27 +3,6 @@ const ByteBuffer = require("bytebuffer");
 const sha1 = require('sha1');
 const EventEmitter = require('events');
 
-/*
-	print_buff_bin(buf, start, offset)
-	{
-		let i = 0;
-		let str = "";
-		while (i < offset)
-		{
-			let b = 0;
-			while (b < 8)
-			{
-				let nb =  buf[start + i];
-				str += (nb >> (7 - b)) & 0x01;
-				b++;
-			}
-			str += " ";
-			i++;
-		}
-		console.log(str);
-	}
-*/
-
 class peer extends EventEmitter
 {
 	constructor(id, ip, port, protocol, peer_id)
@@ -66,7 +45,7 @@ class peer extends EventEmitter
 				this.handshacked = false;
 			})
 			.on('error', (err) => {
-				console.log(err.Error);
+				console.log(err);
 			})
 			.connect(this.port, this.ip);
 	}
@@ -120,7 +99,7 @@ class peer extends EventEmitter
 		else if (id == 5)						// Bitfield
 			this.recieve_bitfield(payload);
 		else if (id == 6)						// Request
-			console.log("Request");
+			this.recieve_request(payload);
 		else if (id == 7)						// Piece
 			this.recieve_block(payload);
 		else if (id == 8)						// Cancel
@@ -144,6 +123,16 @@ class peer extends EventEmitter
 		this.bitfield = payload;
 	}
 
+	send_bitfield()
+	{
+		let buffer = Buffer.alloc(this.torrent.bitfield.length + 5);
+		buffer.writeUInt32BE(this.torrent.bitfield.length + 5, 0);
+		buffer.writeUInt8(5, 4);
+		this.torrent.bitfield.copy(buffer, 5);
+		this.client.write(buffer, 'binary');
+	}
+
+
 	send_have(index)
 	{
 	/*	let offset = Math.pow(2, 14);
@@ -162,19 +151,18 @@ class peer extends EventEmitter
 
 	recieve_have(payload)
 	{
-			let payload_int = payload.readUInt32BE(0);
-
-			let index = Math.floor(payload_int / 8);
-			let bit = 0x80 >> (payload_int % 8);
-
-			// CHECK INDEX OVERFLOW
-			if (index >= this.bitfield.length)
-				throw "bitfield set bad offset";
-			this.bitfield[index] |= bit;
+		let payload_int = payload.readUInt32BE(0);
+		let index = Math.floor(payload_int / 8);
+		let bit = 0x80 >> (payload_int % 8);
+		// CHECK INDEX OVERFLOW
+		if (index >= this.bitfield.length)
+			throw "bitfield set bad offset | We should disconnect";
+		this.bitfield[index] |= bit;
 	}
 
 	recieve_block(payload)
 	{
+		console.log("RECIEVE");
 		// VERIFIER QUE LA PIECE RECUE EST BIEN CELLE DEMANDE
 		// SINON POSSIBILITEE D'INJECTION
 		// OU DE DEPASSEMENT
@@ -191,6 +179,7 @@ class peer extends EventEmitter
 
 	ask_block(piece, start = 0)
 	{
+		console.log("ASK BLOCK " +this.info_hash + "  "+ piece);
 		//	ASK THE RIGHT OFFSET - LAST BLOCK MAY BE CUT
 		/* 2^14 (16 kiB) */
 		let offset = Math.pow(2, 14);
@@ -206,6 +195,30 @@ class peer extends EventEmitter
 		this.client.write(buffer, 'binary');
 	}
 
+	recieve_request(payload)
+	{
+		/*
+		//	ASK THE RIGHT OFFSET - LAST BLOCK MAY BE CUT
+		// 2^14 (16 kiB) 
+		let offset = Math.pow(2, 14);
+		let buffer = Buffer.alloc(17);
+
+//		buffer.writeUInt32BE(13, 0);
+//		buffer.writeUInt8(6, 4);
+
+		buffer.writeUInt32BE(piece, 5);
+		buffer.writeUInt32BE(start, 9);
+		buffer.writeUInt32BE(offset, 13);
+
+		
+		let index = payload.readUInt32BE(0);
+		let begin = payload.readUInt32BE(4);
+		let block = payload.slice(8, payload.length);
+
+		this.client.write(buffer, 'binary');
+		*/
+	}
+
 	send_handshake()
 	{
 		let buf = Buffer.alloc(49 + this.protocol.length, 0, 'binary');
@@ -213,7 +226,6 @@ class peer extends EventEmitter
 		buf.write(this.protocol, 1, 'binary');
 		this.info_hash.copy(buf, 28);
 		this.peer_id.copy(buf, 48);
-
 		this.client.write(buf, 'binary');
 	}
 
@@ -235,9 +247,7 @@ class peer extends EventEmitter
 		}
 		this.buffer = this.buffer.slice(49 + pstrlen);
 		this.handshacked = true;
-		//
-		// I SHOULD SEND MY BITFIELD HERE
-		//
+		this.send_bitfield();
 	}
 }
 
