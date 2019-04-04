@@ -1,4 +1,3 @@
-"use strict";
 const EventEmitter = require('events');
 const fs = require('fs');
 
@@ -50,6 +49,7 @@ class bittorrent
 				resp.setEncoding('binary')
 					.on('data', (chunk) => { data += chunk; })
 					.on('end', () => {
+							console.log("announce");
 						let response = new bencode(Buffer.from(data, 'binary'));
 						if (response.data['failure reason'])
 						{
@@ -126,6 +126,7 @@ class bittorrent
 		let data = new bencode(buffer).data;
 
 		let new_torrent = new torrent(this);
+
 
 		new_torrent.build_from_torrent_file(data).then(() => {
 

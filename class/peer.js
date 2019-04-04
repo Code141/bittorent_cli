@@ -3,6 +3,8 @@ const ByteBuffer = require("bytebuffer");
 const sha1 = require('sha1');
 const EventEmitter = require('events');
 
+const bitfield = require('../class/bitfield');
+
 class peer extends EventEmitter
 {
 	constructor(id, ip, port, protocol, peer_id)
@@ -26,11 +28,11 @@ class peer extends EventEmitter
 	connection(torrent)
 	{
 		this.torrent = torrent;
-
 		this.info_hash = ByteBuffer.fromHex(torrent.info_hash).buffer;
-
 		this.buffer = Buffer.alloc(0);
-		this.bitfield = Buffer.alloc(this.torrent.bitfield_length);
+
+		this.bitfield = new bitfield(this.torrent.bitfield.length);
+
 		this.piece_buffer = Buffer.alloc(torrent.info.piece_length);
 
 		this.client = new net.Socket();
@@ -116,27 +118,29 @@ class peer extends EventEmitter
 
 	recieve_bitfield(payload)
 	{
-		if (payload.length != this.torrent.bitfield_length)
+		if (payload.length != this.torrent.bitfield.length)
 		{
 			this.client.destroy(); // REMOVE SELF FROM this.torrent.peer
-			console.log("Bad bitfield size from " + this.ip + "; Expected: " + this.torrent.bitfield_length + ", got: " + length);
+			console.log("Bad bitfield for " + this.torrent.info.name+ " size from " + this.ip + "; Expected: " + this.torrent.bitfield.length + ", got: " + payload.length);
 		}
-		this.bitfield = payload;
+		this.bitfield.buffer = payload;
 	}
 
 	send_bitfield()
 	{
+
 		let buffer = Buffer.alloc(this.torrent.bitfield.length + 5);
 		buffer.writeUInt32BE((this.torrent.bitfield.length + 1), 0);
 		buffer.writeUInt8(5, 4);
-		this.torrent.bitfield.copy(buffer, 5);
+		this.torrent.bitfield.buffer.copy(buffer, 5);
 		this.client.write(buffer, 'binary')
 	}
 
 
 	send_have(index)
 	{
-	/*	let offset = Math.pow(2, 14);
+/*
+		let offset = Math.pow(2, 14);
 
 		let buffer = Buffer.alloc(17);
 

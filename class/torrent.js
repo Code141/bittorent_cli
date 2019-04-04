@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const bencode = require('../class/bencode');
+const bitfield = require('../class/bitfield');
 
 const download_folder = "/tmp/download/";
 
@@ -26,27 +27,29 @@ function	print_buff_bin(buf, start, offset)
 	console.log(str);
 }
 
-class file extends EventEmitter
+class locale_file
 {
 	constructor (file_path, length, offset = 0)
 	{
-		super();
-
-		this.basename = path.basename(path.join(file_path));
-		this.dirname = path.dirname(path.join(download_folder + path.join(file_path)));
-
-		this.path = path.join(this.dirname, this.basename);
-
+		this.must_be_downloaded = true;
 		this.length = length;
 		this.offset = offset;
+		this.absolute_path = path.join(download_folder, Array.isArray(file_path) ? file_path.join('/') : file_path);
 
+		this.basename = path.basename(this.absolute_path);
+		this.dirname = path.dirname(this.absolute_path);
 
 		if (!fs.existsSync(this.dirname))
-			fs.mkdirSync(path.dirname(file_name), { recursive: true });
-		fs.writeFileSync(this.path, "", {flag: "a+", mode: 0o666});
+			fs.mkdirSync(this.dirname, { recursive: true, mode: 0o777 });
+		fs.writeFileSync(this.absolute_path, "", {flag: "a+", mode: 0o666});
 	}
 
+	write(index)
+	{
+
+	}
 }
+
 class torrent extends EventEmitter
 {
 	constructor (bt_cli)
@@ -69,13 +72,14 @@ class torrent extends EventEmitter
 	build_from_torrent_file(obj)
 	{
 		return new Promise((resolve, reject) => {
-
 		this.announce = obj.announce;
 		this.info = Object();
 		this.info.piece_length = obj.info["piece length"];
 		this.info.pieces = obj.info["pieces"];
 		this.info.name = obj.info["name"];
 		this.info_hash = sha1(Buffer.from(bencode.encode(obj.info), 'binary'));
+
+		console.log("Building " + this.info.name);
 
 		// optionals
 		if ("private" in obj["info"])
@@ -92,42 +96,47 @@ class torrent extends EventEmitter
 			this.encoding = obj["encoding"];
 		// optionals
 
+		let offset = 0
+
 		if ("files" in obj.info)
 		{
-			let offset = 0
-			// Foreach
+			Object.keys(obj.info.files).forEach((key) => {
+				let file = obj.info.files[key];
 
-			console.log(obj.info.files);
-			for (file in this.obj.files)
-			{
-				offset += file.lenght;
-				this.files.push = new file(file.path, obj.info.lenght, offset);
-				//if ("md5sum" in obj.info)
-				//	this.file.md5sum = obj.info["md5sum"];
-			}
+				this.files.push(new locale_file(path.join(this.info.name, file.path.join('/')), file.length, offset));
+				offset += file.length;
+
+				//	if ("md5sum" in obj.info)
+				//		this.file.md5sum = obj.info["md5sum"];
+
+			});
+
+			this.nb_pieces = Math.ceil(offset / this.info.piece_length);
+
+			this.bitfield = new bitfield(Math.ceil(this.nb_pieces / 8));
+			this.bitfield_working = new bitfield(Math.ceil(this.nb_pieces / 8));
 		}
 		else
 		{
-			this.files.push = new file(this.info.name, obj.info.length);
+
+			this.files.push(new locale_file(this.info.name, obj.info.length));
 
 			this.info.length = obj.info.length;
 
 			this.nb_pieces = Math.ceil(this.info.length / this.info.piece_length);
-			this.bitfield_length = Math.ceil(this.nb_pieces / 8);
-
-			this.bitfield = Buffer.alloc(this.bitfield_length);
-			this.bitfield_working = Buffer.alloc(this.bitfield_length);
+			this.bitfield = new bitfield(Math.ceil(this.nb_pieces / 8));
+			this.bitfield_working = new bitfield(Math.ceil(this.nb_pieces / 8));
 
 			if ("md5sum" in obj.info)
 				this.info.md5sum = obj.info["md5sum"];
-
-			this.check_local_files()
-				.then(() => {
-					resolve();
-				})
-				.catch(() => {
-				});
 		}
+
+		this.check_local_files()
+			.then(() => {
+				resolve();
+			})
+			.catch(() => {
+			});
 		});
 
 	}
@@ -139,39 +148,11 @@ class torrent extends EventEmitter
 			this.make_announce();
 		}, interval);
 		 */
-		console.log(this.nb_peers);
+		console.log("Starting " + this.info.name);
 		this.connect_all_peers();
 	}
 
-	/*-- FILE MANAGER ---------------------------------------------------------------------------------*/
-
-	bitfield_set(bitfield, index)
-	{
-		let i = Math.floor(index / 8);
-		let bit = 0x80 >> (index % 8);
-		if (i >= bitfield.length)
-			throw "bitfield_set bad offset";
-		if (!(bitfield[i] & bit))
-			bitfield[i] |= bit;
-	}
-
-	bitfield_unset(bitfield, index)
-	{
-		let i = Math.floor(index / 8);
-		let bit = 0x80 >> (index % 8);
-		if (i >= bitfield.length)
-			throw "bitfield_set bad offset";
-		bitfield[i] &= ~(bit);
-	}
-
-	bitfield_read(bitfield, index)
-	{
-		let i = Math.floor(index / 8);
-		let bit = 0x80 >> (index % 8);
-		if (i >= bitfield.length)
-			throw "bitfield_read bad offset";
-		return (bitfield[i] & bit);
-	}
+	/*-- FILE MANAGER -------------------------------------------------------*/
 
 	check_piece(index, piece)
 	{
@@ -182,12 +163,12 @@ class torrent extends EventEmitter
 
 		for (let i = 0; i < 20; i++)
 			hash_2[i] = parseInt(sha1_new_piece.substring(i * 2, i * 2 + 2), 16);
-
+/*
 		console.log("");
 		console.log("Piece [" + index + " / " + this.nb_pieces + "]");
 		console.log(hash_1);
 		console.log(hash_2);
-
+*/
 		if (Buffer.compare(hash_1, hash_2))
 			return false;
 		else
@@ -198,10 +179,23 @@ class torrent extends EventEmitter
 	{
 		return new Promise((resolve, reject) => {
 			let index = 0;
+			let percent = 0;
+			let valide = 0;
+			let invalid = 0;
+
 			var buffer = Buffer.alloc(0);
 
+			let file = "";
+
 			// PUT WHILE HERE
-			let readableStream = fs.createReadStream(download_folder + this.info.name, {
+
+			let i = 0;
+
+			file = this.files[i];
+
+
+
+			let readableStream = fs.createReadStream(file.absolute_path, {
 				flags: 'r+'
 			});
 
@@ -215,20 +209,32 @@ class torrent extends EventEmitter
 					{
 						let piece = Buffer.from( buffer, 0, current_piece_length);
 						if (this.check_piece(index, piece))
-							this.bitfield_set(this.bitfield, index);
+						{
+							valide++;
+							this.bitfield.set(index);
+						}
 						buffer = buffer.slice(current_piece_length);
-						print_buff_bin(this.bitfield, 0, Math.ceil(index/8));
+
+						if (Math.floor(index / this.nb_pieces * 100) != percent)
+						{
+							percent =  Math.floor(index / this.nb_pieces * 100);
+							console.log("Checking " + percent+ "% " + this.info.name);
+						}
 						index++;
 					}
+
 				})
 				.on('end', () => {
-					console.log('---------------------------------- FILE LOADED ----------------------------------');
+					//					console.log('---------------------------------- FILE LOADED ----------------------------------');
 					// JUMP ON NEXT FILE
+					// DON'T FORGET PADDING TO NEXT FILES WHEN LAST FILE IS NOT TOTALY DOWNLOADED
+
 					readableStream.destroy();
 				})
 				.on("close", () =>{
-					console.log('                       ----------- FILE CLOSED ----------                        ');
-					resolve();		// warning to resolve after multiples files
+					if (index == this.nb_pieces)
+						resolve();
+					//					console.log('                       ----------- FILE CLOSED ----------                        ');
 				});
 		});
 
@@ -240,12 +246,12 @@ class torrent extends EventEmitter
 		let bit = 0x80 >> (index % 8);
 
 		while (i < this.bitfield.length
-			&& ((this.bitfield[i] === 0xff)
-				|| ((this.bitfield[i] | this.bitfield_working[i]) === 0xff)))
+			&& ((this.bitfield.buffer[i] === 0xff)
+				|| ((this.bitfield.buffer[i] | this.bitfield_working.buffer[i]) === 0xff)))
 			i++;
 		if (i < this.bitfield.length)
 		{
-			let sector = this.bitfield[i] | this.bitfield_working[i];
+			let sector = this.bitfield.buffer[i] | this.bitfield_working.buffer[i];
 			let j = index % 8;
 			while ((sector & bit))
 			{
@@ -258,31 +264,7 @@ class torrent extends EventEmitter
 		return (-1);
 	}
 
-	next_piece_hard(index = 0)
-	{
-		let i = Math.floor(index / 8);
-		let bit = 0x80 >> (index % 8);
-
-		while (i < this.bitfield.length && this.bitfield[i] === 0xff)
-			i++;
-
-		if (i < this.bitfield.length)
-		{
-			let sector = this.bitfield[i];
-			let j = index % 8;
-			while ((sector & bit))
-			{
-				bit = bit >> 1;
-				j++;
-			}
-			if (bit)
-				return i * 8 + j;
-		}
-		return (-1);
-	}
-
-
-	/*-- PEERS CONTROLER ------------------------------------------------------------------------------*/
+	/*-- PEERS CONTROLER ----------------------------------------------------*/
 
 	give_job(peer)
 	{
@@ -290,18 +272,19 @@ class torrent extends EventEmitter
 		if (index == -1)
 			return console.log ("BORING !");
 
-		while (!this.bitfield_read(peer.bitfield, index))
+		while (!peer.bitfield.read(index))
 		{
 			index = this.next_piece(index + 1);
 			if (index == -1)
 			{
-
-				peer.ask_block(this.next_piece_hard(0));
-
-				return console.log ("BORING !");
+				index = this.bitfield.next();
+				if (index != -1)
+					peer.ask_block(index);
+				console.log ("BORING !");
 			}
 		}
-		this.bitfield_set(this.bitfield_working, index);
+		this.bitfield_working.set(index);
+
 		if (index >= 0)
 			peer.ask_block(index);
 		else
@@ -327,6 +310,7 @@ class torrent extends EventEmitter
 
 	connect_all_peers()
 	{
+
 		this.for_all_peers((peer) => {
 			peer.connection(this);
 			peer.on('ready', () => {
@@ -334,24 +318,33 @@ class torrent extends EventEmitter
 			});
 
 			peer.on('piece_finished', (index, piece) => {
+
 				this.give_job(peer);
-				this.bitfield_unset(this.bitfield_working, index);
+				this.bitfield_working.unset(index);
 
 				if (this.check_piece(index, piece))
 				{
+				console.log('piece finished ' + index + ' ' + this.info.name);
+					let piece_start = this.info.piece_length * index;
+					for (let i = 0; i < this.files.length; i++)
+					{
+						let file = this.files[i];
+						if (piece_start >= file.offset)
+						{
+							var writeStream = fs.createWriteStream(file.absolute_path, {
+								flags: 'r+',
+								mode: 0o666,
+								start: this.info.piece_length * index - file.offset,
+							});
 
-					var writeStream = fs.createWriteStream(download_folder + this.info.name, {
-						flags: 'r+',
-						mode: 0o666,
-						start: this.info.piece_length * index,
-					});
-
-					writeStream.write(piece, () => {
-						this.bitfield_set(this.bitfield, index);
-						this.for_all_peers((peer) => {
-							peer.send_have(index);
-						})
-					});
+							writeStream.write(piece, () => {
+								this.bitfield.set(index);
+								this.for_all_peers((peer) => {
+									peer.send_have(index);
+								})
+							});
+						}
+					}
 
 				}
 				else
@@ -359,15 +352,16 @@ class torrent extends EventEmitter
 					//				console.log('--- ' + index + ' -- FAILED----')
 					// RETRY
 				}
-
+/*
 				console.log('');
 				console.log('');
 				console.log('');
-				print_buff_bin(this.bitfield, 0, this.bitfield_working.length);
+				print_buff_bin(this.bitfield.buffer, 0, this.bitfield_working.length);
 				console.log('');
-				print_buff_bin(this.bitfield_working, 0,this.bitfield_working.length);
+				print_buff_bin(this.bitfield_working.buffer, 0,this.bitfield_working.length);
 				console.log('----------------------------------------------------------------------');
 				console.log('peers = ' + Object.keys(this.peers).length);
+				*/
 			});
 		});
 	}
