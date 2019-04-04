@@ -44,7 +44,7 @@ class bittorrent
 				+ "&" + "event="		+ "started"
 				+ "&" + "numwant="		+ 50
 				+ "&" + "compact="		+ 1;
-
+console.log(url)
 			http.get(url, (resp) => {
 				let data = '';
 				resp.setEncoding('binary')

@@ -29,10 +29,6 @@ split
 wincmd w
 wincmd w
 wincmd w
-wincmd _ | wincmd |
-split
-1wincmd k
-wincmd w
 wincmd w
 wincmd w
 wincmd t
@@ -40,18 +36,15 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-exe '1resize ' . ((&lines * 1 + 40) / 80)
+exe '1resize ' . ((&lines * 25 + 40) / 80)
 exe 'vert 1resize ' . ((&columns * 84 + 134) / 268)
-exe '2resize ' . ((&lines * 9 + 40) / 80)
+exe '2resize ' . ((&lines * 25 + 40) / 80)
 exe 'vert 2resize ' . ((&columns * 84 + 134) / 268)
-exe '3resize ' . ((&lines * 64 + 40) / 80)
+exe '3resize ' . ((&lines * 24 + 40) / 80)
 exe 'vert 3resize ' . ((&columns * 84 + 134) / 268)
-exe '4resize ' . ((&lines * 1 + 40) / 80)
 exe 'vert 4resize ' . ((&columns * 84 + 134) / 268)
-exe '5resize ' . ((&lines * 74 + 40) / 80)
 exe 'vert 5resize ' . ((&columns * 84 + 134) / 268)
-exe 'vert 6resize ' . ((&columns * 84 + 134) / 268)
-exe 'vert 7resize ' . ((&columns * 13 + 134) / 268)
+exe 'vert 6resize ' . ((&columns * 13 + 134) / 268)
 argglobal
 setlocal fdm=indent
 setlocal fde=0
@@ -63,12 +56,12 @@ setlocal fdn=20
 setlocal fen
 12
 normal! zo
-let s:l = 12 - ((0 * winheight(0) + 0) / 1)
+let s:l = 1 - ((0 * winheight(0) + 12) / 25)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-12
-normal! 047|
+1
+normal! 013|
 wincmd w
 argglobal
 if bufexists("class/bencode.js") | buffer class/bencode.js | else | edit class/bencode.js | endif
@@ -80,7 +73,7 @@ setlocal fdl=5
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 65 - ((8 * winheight(0) + 4) / 9)
+let s:l = 65 - ((17 * winheight(0) + 12) / 25)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
@@ -101,7 +94,7 @@ setlocal fen
 normal! zo
 49
 normal! zo
-let s:l = 47 - ((41 * winheight(0) + 32) / 64)
+let s:l = 47 - ((15 * winheight(0) + 12) / 24)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
@@ -128,6 +121,12 @@ normal! zo
 normal! zo
 34
 normal! zo
+48
+normal! zo
+48
+normal! zo
+48
+normal! zo
 49
 normal! zo
 51
@@ -140,39 +139,20 @@ normal! zo
 normal! zo
 103
 normal! zo
+109
+normal! zo
 124
 normal! zo
 130
 normal! zo
 132
 normal! zo
-let s:l = 123 - ((0 * winheight(0) + 0) / 1)
+let s:l = 97 - ((38 * winheight(0) + 38) / 76)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-123
-normal! 05|
-wincmd w
-argglobal
-if bufexists("t") | buffer t | else | edit t | endif
-setlocal fdm=indent
-setlocal fde=0
-setlocal fmr={{{,}}}
-setlocal fdi=#
-setlocal fdl=0
-setlocal fml=1
-setlocal fdn=20
-setlocal fen
-17
-normal! zo
-34
-normal! zo
-let s:l = 39 - ((38 * winheight(0) + 37) / 74)
-if s:l < 1 | let s:l = 1 | endif
-exe s:l
-normal! zt
-39
-normal! 0
+97
+normal! 09|
 wincmd w
 argglobal
 if bufexists("class/torrent.js") | buffer class/torrent.js | else | edit class/torrent.js | endif
@@ -184,44 +164,64 @@ setlocal fdl=9
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-32
+34
 normal! zo
-65
+67
 normal! zo
-84
+69
+normal! zc
+85
 normal! zo
-184
+85
+normal! zc
+157
 normal! zo
-192
+157
+normal! zc
+171
 normal! zo
+171
+normal! zc
 193
 normal! zo
-193
+198
 normal! zo
-216
+199
 normal! zo
-217
+207
 normal! zo
-224
+220
 normal! zo
-239
+220
 normal! zo
-286
+220
 normal! zo
-332
+220
 normal! zo
-333
+220
 normal! zo
-340
+220
 normal! zo
-354
+226
 normal! zo
-let s:l = 209 - ((7 * winheight(0) + 38) / 76)
+256
+normal! zo
+282
+normal! zo
+328
+normal! zo
+329
+normal! zo
+336
+normal! zo
+350
+normal! zo
+let s:l = 218 - ((53 * winheight(0) + 38) / 76)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-209
-normal! 0
+218
+normal! 051|
 wincmd w
 argglobal
 if bufexists("class/peer.js") | buffer class/peer.js | else | edit class/peer.js | endif
@@ -253,26 +253,23 @@ normal! zo
 normal! zo
 212
 normal! zo
-let s:l = 22 - ((21 * winheight(0) + 38) / 76)
+let s:l = 216 - ((7 * winheight(0) + 38) / 76)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-22
-normal! 0
+216
+normal! 05|
 wincmd w
 5wincmd w
-exe '1resize ' . ((&lines * 1 + 40) / 80)
+exe '1resize ' . ((&lines * 25 + 40) / 80)
 exe 'vert 1resize ' . ((&columns * 84 + 134) / 268)
-exe '2resize ' . ((&lines * 9 + 40) / 80)
+exe '2resize ' . ((&lines * 25 + 40) / 80)
 exe 'vert 2resize ' . ((&columns * 84 + 134) / 268)
-exe '3resize ' . ((&lines * 64 + 40) / 80)
+exe '3resize ' . ((&lines * 24 + 40) / 80)
 exe 'vert 3resize ' . ((&columns * 84 + 134) / 268)
-exe '4resize ' . ((&lines * 1 + 40) / 80)
 exe 'vert 4resize ' . ((&columns * 84 + 134) / 268)
-exe '5resize ' . ((&lines * 74 + 40) / 80)
 exe 'vert 5resize ' . ((&columns * 84 + 134) / 268)
-exe 'vert 6resize ' . ((&columns * 84 + 134) / 268)
-exe 'vert 7resize ' . ((&columns * 13 + 134) / 268)
+exe 'vert 6resize ' . ((&columns * 13 + 134) / 268)
 tabnext 1
 badd +1 index.js
 badd +1 ~/cursus/app/index.js
@@ -290,7 +287,7 @@ badd +37 html/index.html
 badd +1 class/ninja.js
 badd +3 class/db.js
 badd +17 class/bencoding.js
-badd +9277 t
+badd +5 t
 badd +44 class/bittorrent_reader.js
 badd +4 class/seeder.js
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0

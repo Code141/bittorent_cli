@@ -190,38 +190,7 @@ class torrent extends EventEmitter
 	async read (file) {
 //		let readableStream = fs.createReadStream(file.absolute_path, { flags: 'r+' });
 
-		return new Promise((resolve) => {
-			const stream = fs.createReadStream(file.absolute_path, {});
-			stream.on('data', data => {
-				/*
-				buffer = Buffer.concat([buffer, chunk]);
-				let current_piece_length = this.info.piece_length;
-
-				while (buffer.length >= current_piece_length)
-				{
-					if (this.check_piece(index, buffer.slice(0, current_piece_length)))
-					{
-						valide++;
-						this.bitfield.set(index);
-					}
-					buffer = buffer.slice(current_piece_length);
-						percent =  Math.floor(index / this.nb_pieces * 100);
-						console.log('');
-						console.log('');
-						console.log(this.info.name);
-						console.log("Checking " + percent + "% " + this.info.name);
-						print_buff_bin(this.bitfield.buffer, 0, this.bitfield_working.length);
-					index++;
-				}
-				*/
-			});
-			stream.on('end', () => {
-				stream.destroy();
-			});
-			stream.on('close', () => {
-				resolve();
-			});
-		});
+		return 
 	}
 
 	check_local_files()
@@ -233,15 +202,51 @@ class torrent extends EventEmitter
 			let invalid = 0;
 
 			var buffer = Buffer.alloc(0);
-			let file = "";
-
-			// PUT WHILE HERE
-			let i = 0;
-
 
 			for (let file of this.files) {
 				console.log('Checking ' + file.absolute_path)
-				await this.read(file);
+				await new Promise(async (resolve) => {
+					const stream = fs.createReadStream(file.absolute_path, {});
+					stream.on('data', data => {
+/*
+var hash = crypto.createHash('md5'),
+stream = fs.createReadStream('mybigfile.dat')
+stream.on('data', function(data) {
+  hash.update(data, 'utf8')
+})
+stream.on('end', function() {
+  hash.digest('hex') // 34f7a3113803f8ed3b8fd7ce5656ebec
+})
+						*/
+						/*
+						buffer = Buffer.concat([buffer, data]);
+						let current_piece_length = this.info.piece_length;
+						while (buffer.length >= current_piece_length)
+						{
+							if (this.check_piece(index, buffer.slice(0, current_piece_length)))
+							{
+								valide++;
+								this.bitfield.set(index);
+							}
+							buffer = buffer.slice(current_piece_length);
+							percent =  Math.floor(index / this.nb_pieces * 100);
+							console.log('');
+							console.log('');
+							console.log(this.info.name);
+							console.log("Checking " + percent + "% " + this.info.name);
+							print_buff_bin(this.bitfield.buffer, 0, this.bitfield_working.length);
+							index++;
+						}
+						*/
+					});
+					stream.on('end', () => {
+						stream.destroy();
+					});
+					stream.on('close', () => {
+						resolve();
+					});
+				});
+
 			}
 		});
 	}
