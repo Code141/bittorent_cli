@@ -124,11 +124,9 @@ class bittorrent
 		let buffer = fs.readFileSync(file);
 
 		let data = new bencode(buffer).data;
-
 		let new_torrent = new torrent(this);
 
 		new_torrent.build_from_torrent_file(data).then(() => {
-
 			this.make_announce(new_torrent).then(() => {
 
 				if (data.info_hash in this.torrents)

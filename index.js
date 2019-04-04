@@ -1,49 +1,14 @@
 "use strict";
-const express = require('express');
-
-const bodyParser = require('body-parser');
-const session = require('express-session');
-
-const app = express();
+const fs = require('fs');
+const bittorrent = require('./class/bittorrent');
 
 global.__basedir = __dirname;
 
-app
-	.use(session({ secret: 'keyboard cat', resave: false, saveUninitialized: true }))
-	.use(bodyParser.urlencoded({ extended: true }))
-	.use(bodyParser.json())
-	.use(express.static('static'))
+let bt_cli = new bittorrent();
 
-	.use('/', require('./routes/main'))
+let torrent_folder = __basedir + '/torrents/';
 
-	.listen(process.env.port || 8081, () => {
-		console.log('- Server now listning -');
-	})
+fs.readdirSync(torrent_folder).forEach(file => {
+		bt_cli.addTorrentFromFile(torrent_folder + file);
+})
 
-
-
-/*
-const http = require('http');
-const WebSocketServer = require('websocket').server;
-var server = http.createServer(function(request, response) {
-	// process HTTP request. Since we're writing just WebSockets
-	// server we don't have to implement anything.
-});
-server.listen(1337, function() { });
-wsServer = new WebSocketServer({ httpServer: server });
-wsServer.on('request', function(request) {
-	var connection = request.accept(null, request.origin);
-	connection
-		.on('message', function(message) {
-			if (message.type === 'utf8') {
-				console.log("HELLO");
-				console.log(message);
-				connection.sendUTF(
-				JSON.stringify({ type:'color', data: "DAAATAAA" }));
-				// process WebSocket message
-			}
-		})
-		.on('close', function(connection) {
-		});
-});
-*/

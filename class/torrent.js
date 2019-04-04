@@ -1,3 +1,5 @@
+
+"use strict";
 const EventEmitter = require('events');
 const sha1 = require('sha1');
 const fs = require('fs');
@@ -34,14 +36,24 @@ class locale_file
 		this.must_be_downloaded = true;
 		this.length = length;
 		this.offset = offset;
-		this.absolute_path = path.join(download_folder, Array.isArray(file_path) ? file_path.join('/') : file_path);
-
-		this.basename = path.basename(this.absolute_path);
-		this.dirname = path.dirname(this.absolute_path);
-
-		if (!fs.existsSync(this.dirname))
-			fs.mkdirSync(this.dirname, { recursive: true, mode: 0o777 });
+		this.path = Array.isArray(file_path) ? file_path.join('/') : file_path;
+		this.basename = path.basename(this.path);
+		this.dirname = path.dirname(this.path);
+		this.absolute_path = path.join(download_folder, this.dirname, this.basename);
+//		if (!fs.existsSync(this.dirname))		NODE V10
+//			fs.mkdirSync(this.dirname, { recursive: true, mode: 0o777 });
+		this.mkdir_recursive();				//	NODE V8
 		fs.writeFileSync(this.absolute_path, "", {flag: "a+", mode: 0o666});
+	}
+
+	mkdir_recursive()
+	{
+		let recur_path = '';
+		this.dirname.split(path.sep).forEach((e) => {
+			recur_path = path.join(recur_path, e);
+			if (!fs.existsSync(download_folder + recur_path))
+				fs.mkdirSync(download_folder + recur_path);
+		});
 	}
 
 	write(index)
@@ -66,12 +78,13 @@ class torrent extends EventEmitter
 		this.peers_working = Array();
 		this.peers_boring = Array();
 		this.files = Array();
-
 	}
 
 	build_from_torrent_file(obj)
 	{
 		return new Promise((resolve, reject) => {
+		console.log("Building " + obj.info["name"]);
+
 		this.announce = obj.announce;
 		this.info = Object();
 		this.info.piece_length = obj.info["piece length"];
@@ -79,7 +92,6 @@ class torrent extends EventEmitter
 		this.info.name = obj.info["name"];
 		this.info_hash = sha1(Buffer.from(bencode.encode(obj.info), 'binary'));
 
-		console.log("Building " + this.info.name);
 
 		// optionals
 		if ("private" in obj["info"])
@@ -138,8 +150,8 @@ class torrent extends EventEmitter
 			.catch(() => {
 			});
 		});
-
 	}
+
 	start()
 	{
 		/*
@@ -163,81 +175,75 @@ class torrent extends EventEmitter
 
 		for (let i = 0; i < 20; i++)
 			hash_2[i] = parseInt(sha1_new_piece.substring(i * 2, i * 2 + 2), 16);
-/*
-		console.log("");
-		console.log("Piece [" + index + " / " + this.nb_pieces + "]");
-		console.log(hash_1);
-		console.log(hash_2);
-*/
+		/*
+			console.log("");
+			console.log("Piece [" + index + " / " + this.nb_pieces + "]");
+			console.log(hash_1);
+			console.log(hash_2);
+		*/
 		if (Buffer.compare(hash_1, hash_2))
 			return false;
 		else
 			return true;
 	}
 
+	async read (file) {
+//		let readableStream = fs.createReadStream(file.absolute_path, { flags: 'r+' });
+
+		return new Promise((resolve) => {
+			const stream = fs.createReadStream(file.absolute_path, {});
+			stream.on('data', data => {
+				/*
+				buffer = Buffer.concat([buffer, chunk]);
+				let current_piece_length = this.info.piece_length;
+
+				while (buffer.length >= current_piece_length)
+				{
+					if (this.check_piece(index, buffer.slice(0, current_piece_length)))
+					{
+						valide++;
+						this.bitfield.set(index);
+					}
+					buffer = buffer.slice(current_piece_length);
+						percent =  Math.floor(index / this.nb_pieces * 100);
+						console.log('');
+						console.log('');
+						console.log(this.info.name);
+						console.log("Checking " + percent + "% " + this.info.name);
+						print_buff_bin(this.bitfield.buffer, 0, this.bitfield_working.length);
+					index++;
+				}
+				*/
+			});
+			stream.on('end', () => {
+				stream.destroy();
+			});
+			stream.on('close', () => {
+				resolve();
+			});
+		});
+	}
+
 	check_local_files()
 	{
-		return new Promise((resolve, reject) => {
+		return new Promise(async (resolve, reject) => {
 			let index = 0;
 			let percent = 0;
 			let valide = 0;
 			let invalid = 0;
 
 			var buffer = Buffer.alloc(0);
-
 			let file = "";
 
 			// PUT WHILE HERE
-
 			let i = 0;
 
-			file = this.files[i];
 
-
-
-			let readableStream = fs.createReadStream(file.absolute_path, {
-				flags: 'r+'
-			});
-
-			readableStream
-				.on('data', (chunk) => {
-
-					buffer = Buffer.concat([buffer, chunk]);
-					let current_piece_length = this.info.piece_length;
-
-					while (buffer.length >= current_piece_length)
-					{
-						let piece = Buffer.from( buffer, 0, current_piece_length);
-						if (this.check_piece(index, piece))
-						{
-							valide++;
-							this.bitfield.set(index);
-						}
-						buffer = buffer.slice(current_piece_length);
-
-						if (Math.floor(index / this.nb_pieces * 100) != percent)
-						{
-							percent =  Math.floor(index / this.nb_pieces * 100);
-							console.log("Checking " + percent+ "% " + this.info.name);
-						}
-						index++;
-					}
-
-				})
-				.on('end', () => {
-					//					console.log('---------------------------------- FILE LOADED ----------------------------------');
-					// JUMP ON NEXT FILE
-					// DON'T FORGET PADDING TO NEXT FILES WHEN LAST FILE IS NOT TOTALY DOWNLOADED
-
-					readableStream.destroy();
-				})
-				.on("close", () =>{
-					if (index == this.nb_pieces)
-						resolve();
-					//					console.log('                       ----------- FILE CLOSED ----------                        ');
-				});
+			for (let file of this.files) {
+				console.log('Checking ' + file.absolute_path)
+				await this.read(file);
+			}
 		});
-
 	}
 
 	next_piece(index = 0)
@@ -270,7 +276,7 @@ class torrent extends EventEmitter
 	{
 		let index = this.next_piece(0);
 		if (index == -1)
-			return console.log ("BORING !");
+			return console.log ("Finished (boring)" + peer.ip);
 
 		while (!peer.bitfield.read(index))
 		{
@@ -279,8 +285,11 @@ class torrent extends EventEmitter
 			{
 				index = this.bitfield.next();
 				if (index != -1)
+				{
+					this.bitfield_working.set(index);
 					peer.ask_block(index);
-				console.log ("BORING !");
+				}
+				return console.log ("BORING !" + peer.ip + " 1");
 			}
 		}
 		this.bitfield_working.set(index);
@@ -324,7 +333,15 @@ class torrent extends EventEmitter
 
 				if (this.check_piece(index, piece))
 				{
+				console.log('');
+				console.log('');
+				console.log(this.info.name);
+				console.log('peers = ' + Object.keys(this.peers).length);
 				console.log('piece finished ' + index + ' ' + this.info.name);
+				print_buff_bin(this.bitfield.buffer, 0, this.bitfield_working.length);
+				console.log('');
+				print_buff_bin(this.bitfield_working.buffer, 0,this.bitfield_working.length);
+
 					let piece_start = this.info.piece_length * index;
 					for (let i = 0; i < this.files.length; i++)
 					{
@@ -352,16 +369,8 @@ class torrent extends EventEmitter
 					//				console.log('--- ' + index + ' -- FAILED----')
 					// RETRY
 				}
-/*
-				console.log('');
-				console.log('');
-				console.log('');
-				print_buff_bin(this.bitfield.buffer, 0, this.bitfield_working.length);
-				console.log('');
-				print_buff_bin(this.bitfield_working.buffer, 0,this.bitfield_working.length);
-				console.log('----------------------------------------------------------------------');
-				console.log('peers = ' + Object.keys(this.peers).length);
-				*/
+
+			
 			});
 		});
 	}
